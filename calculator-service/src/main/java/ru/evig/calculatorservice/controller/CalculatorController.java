@@ -1,24 +1,30 @@
 package ru.evig.calculatorservice.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.evig.calculatorservice.dto.CreditDto;
 import ru.evig.calculatorservice.dto.LoanOfferDto;
 import ru.evig.calculatorservice.dto.LoanStatementRequestDto;
 import ru.evig.calculatorservice.dto.ScoringDataDto;
+import ru.evig.calculatorservice.service.CalculatorService;
 
-import java.util.ArrayList;
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
 @RequestMapping("/calculator")
+@RequiredArgsConstructor
 public class CalculatorController {
+    private final CalculatorService service;
 
     @PostMapping("/offers")
-    private List<LoanOfferDto> someVoid1(LoanStatementRequestDto loanStatementRequestDto) {
+    private List<LoanOfferDto> getLoanOffer(@Valid @RequestBody
+                                                LoanStatementRequestDto loanStatementRequestDto) {
 
-        return new ArrayList<>();
+        return service.getLoanOfferList(loanStatementRequestDto);
     }
 
     @PostMapping("/calc")
