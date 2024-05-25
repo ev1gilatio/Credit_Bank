@@ -1,6 +1,7 @@
 package ru.evig.calculatorservice.dto;
 
 import lombok.Data;
+import org.springframework.lang.Nullable;
 
 import javax.validation.constraints.*;
 import java.math.BigDecimal;
@@ -21,15 +22,15 @@ public class LoanStatementRequestDto {
     @Pattern(regexp = "^[a-zA-Z]{2,30}$")
     private String lastName;
 
-    //TODO сделать валидацию отчества
-    //@Pattern(regexp = "^[a-zA-Z]{2,30}$")
+    @Nullable
+    @Pattern(regexp = "^[a-zA-Z]{2,30}$")
     private String middleName;
 
     @Pattern(regexp = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$")
     private String email;
 
-    //TODO сделать валидацию даты
     //гггг-мм-дд
+    @Past
     private LocalDate birthday;
 
     @Pattern(regexp = "^[0-9]{4}$")

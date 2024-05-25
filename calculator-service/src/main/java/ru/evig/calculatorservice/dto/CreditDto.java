@@ -2,15 +2,17 @@ package ru.evig.calculatorservice.dto;
 
 import lombok.Data;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 public class CreditDto {
-    private Enum gender;
-    private Enum maritalStatus;
-    private Integer dependentAmount;
-    private LocalDate passportIssueDate;
-    private String passportIssueBranch;
-    private EmploymentDto employment;
-    private String accountNumber;
+    private BigDecimal amount;
+    private Integer term;
+    private BigDecimal monthlyPayment;
+    private BigDecimal rate;
+    private BigDecimal psk;
+    private Boolean isInsuranceEnabled;
+    private Boolean isSalaryClient;
+    private List<PaymentScheduleElementDto> paymentSchedule;
 }
