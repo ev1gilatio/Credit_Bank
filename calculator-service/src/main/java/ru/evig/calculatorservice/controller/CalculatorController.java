@@ -1,10 +1,13 @@
 package ru.evig.calculatorservice.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springdoc.api.ErrorMessage;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.WebRequest;
 import ru.evig.calculatorservice.Exception.LoanRejectedException;
 import ru.evig.calculatorservice.Exception.TooYoungForCreditException;
 import ru.evig.calculatorservice.dto.CreditDto;
@@ -22,6 +25,7 @@ import java.util.List;
 @RequestMapping("/calculator")
 @RequiredArgsConstructor
 public class CalculatorController {
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final CalculatorService service;
 
     @PostMapping("/offers")
@@ -37,16 +41,23 @@ public class CalculatorController {
     }
 
     @ExceptionHandler(TooYoungForCreditException.class)
-    public ResponseEntity<ErrorMessage> handleException(TooYoungForCreditException e) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorMessage(e.getMessage()));
+    public ResponseEntity<ErrorMessage> handleException(TooYoungForCreditException e, WebRequest r) {
+
+        return badRequestResponse(e, r);
     }
 
     @ExceptionHandler(LoanRejectedException.class)
-    public ResponseEntity<ErrorMessage> handleException(LoanRejectedException e) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorMessage(e.getMessage()));
+    public ResponseEntity<ErrorMessage> handleException(LoanRejectedException e, WebRequest r) {
+
+        return badRequestResponse(e, r);
+    }
+
+    private ResponseEntity<ErrorMessage> badRequestResponse(RuntimeException e, WebRequest r) {
+        String logMessage = String.format("Exception: %s, message: %s, request: %s",
+                e.getClass().getName(), e.getMessage(), r.getDescription(false));
+
+        log.error(logMessage, e);
+
+        return new ResponseEntity<>(new ErrorMessage(e.getMessage()), HttpStatus.BAD_REQUEST);
     }
 }

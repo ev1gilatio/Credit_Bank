@@ -1,5 +1,7 @@
 package ru.evig.calculatorservice.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.evig.calculatorservice.Exception.LoanRejectedException;
@@ -20,7 +22,11 @@ public class CalculatorService {
     @Value("${loanBaseRate}")
     private BigDecimal loanBaseRate;
 
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
+
     public List<LoanOfferDto> getLoanOfferDtoList(LoanStatementRequestDto lsrDto) {
+        log.info("Input data for getLoanOfferDto = " + lsrDto);
+
         if (LocalDate.from(lsrDto.getBirthday()).until(LocalDate.now(), ChronoUnit.YEARS) < 18) {
             throw new TooYoungForCreditException("The person is younger than 18");
         }
@@ -57,11 +63,15 @@ public class CalculatorService {
                 loDto.setMonthlyPayment(totalMonthlyPayment.setScale(2, RoundingMode.HALF_UP));
 
                 list.add(loDto);
+
+                log.info("list[" + (list.size() - 1) + "] in getLoanOfferDto = " + loDto);
             }
         }
 
         Comparator<LoanOfferDto> compareByRate = Comparator
                 .comparing(LoanOfferDto::getRate);
+
+        log.info("Output data from getLoanOfferDto = " + list);
 
         return list.stream()
                 .sorted(compareByRate)
@@ -69,6 +79,8 @@ public class CalculatorService {
     }
 
     public CreditDto getCreditDto(ScoringDataDto sdDto) {
+        log.info("Input data for getCreditDto = " + sdDto);
+
         CreditDto cDto = new CreditDto();
 
         if (sdDto.getEmployment().getEmploymentStatus() == EmploymentStatus.UNEMPLOYED) {
@@ -121,10 +133,14 @@ public class CalculatorService {
         cDto.setPsk(totalPsk.setScale(2, RoundingMode.HALF_UP));
         cDto.setPaymentSchedule(getPaymentScheduleList(cDto));
 
+        log.info("Output data from getCreditDto = " + cDto);
+
         return cDto;
     }
 
     private List<PaymentScheduleElementDto> getPaymentScheduleList(CreditDto cDto) {
+        log.info("Input data for getPaymentScheduleList = " + cDto);
+
         List<PaymentScheduleElementDto> list = new ArrayList<>();
         PaymentScheduleElementDto pseDto;
 
@@ -154,7 +170,11 @@ public class CalculatorService {
             amount = amount.subtract(pseDto.getDebtPayment());
 
             list.add(pseDto);
+
+            log.info("list[" + (i - 1) + "] in getPaymentScheduleList = " + list.get(i - 1));
         }
+
+        log.info("Output data from getPaymentScheduleList = " + list);
 
         return list;
     }
