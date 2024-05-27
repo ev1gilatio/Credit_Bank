@@ -41,7 +41,7 @@ public class ScoringDataDto {
     @Pattern(regexp = "^[0-9]{6}$")
     private String passportNumber;
 
-    @Future
+    @Past
     private LocalDate passportIssueDate;
 
     //TODO придумать валидацию места выдачи паспорта
