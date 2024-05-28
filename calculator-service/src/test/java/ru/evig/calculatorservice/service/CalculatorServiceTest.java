@@ -202,7 +202,7 @@ public class CalculatorServiceTest {
         sdDto.setPassportSeries("0123");
         sdDto.setPassportNumber("456789");
         sdDto.setPassportIssueDate(LocalDate.of(2020, 4, 27));
-        sdDto.setPassportIssueBranch("SBp_NeoFlex");
+        sdDto.setPassportIssueBranch("SBp NeoFlex");
         sdDto.setMaritalStatus(MaritalStatus.NOT_MARRIED);
         sdDto.setEmployment(eDto);
         sdDto.setAccountNumber("AccNumber");

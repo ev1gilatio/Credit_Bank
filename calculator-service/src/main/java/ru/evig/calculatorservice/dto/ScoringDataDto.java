@@ -44,7 +44,7 @@ public class ScoringDataDto {
     @Past
     private LocalDate passportIssueDate;
 
-    //TODO придумать валидацию места выдачи паспорта
+    @Pattern(regexp = "^[a-zA-Z ]{1,256}$")
     private String passportIssueBranch;
 
     @NotNull
