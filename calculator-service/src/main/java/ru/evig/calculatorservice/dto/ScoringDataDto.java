@@ -61,7 +61,7 @@ public class ScoringDataDto {
     private String accountNumber;
 
     @NotNull
-    private Boolean isInsuranceEnable;
+    private Boolean isInsuranceEnabled;
 
     @NotNull
     private Boolean isSalaryClient;

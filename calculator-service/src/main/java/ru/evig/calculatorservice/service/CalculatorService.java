@@ -48,7 +48,7 @@ public class CalculatorService {
                 loDto.setTerm(lsrDto.getTerm());
 
                 BigDecimal isInsuranceLoanAdd = new BigDecimal(100000 * (i % 2));
-                BigDecimal totalAmount = loDto.getRequestedAmount().add(isInsuranceLoanAdd);
+                BigDecimal totalAmount = lsrDto.getAmount().add(isInsuranceLoanAdd);
                 loDto.setTotalAmount(totalAmount);
 
                 BigDecimal isInsuranceRateAdd = new BigDecimal(3 * (i % 2));
@@ -56,13 +56,7 @@ public class CalculatorService {
                 BigDecimal totalRate = loanBaseRate.subtract(isInsuranceRateAdd).subtract(isSalaryClientRateAdd);
                 loDto.setRate(totalRate);
 
-                BigDecimal monthlyRate = loDto.getRate().divide(new BigDecimal(1200), 20, RoundingMode.HALF_UP);
-                BigDecimal numerator = loDto.getTotalAmount()
-                        .multiply(monthlyRate)
-                        .multiply((BigDecimal.ONE.add(monthlyRate)).pow(loDto.getTerm()));
-                BigDecimal denominator = ((BigDecimal.ONE.add(monthlyRate)).pow(loDto.getTerm()))
-                        .subtract(BigDecimal.ONE);
-                BigDecimal totalMonthlyPayment = numerator.divide(denominator, 20, RoundingMode.HALF_UP);
+                BigDecimal totalMonthlyPayment = getMonthlyPayment(totalRate, totalAmount, lsrDto.getTerm());
                 loDto.setMonthlyPayment(totalMonthlyPayment.setScale(2, RoundingMode.HALF_UP));
 
                 list.add(loDto);
@@ -98,12 +92,12 @@ public class CalculatorService {
             throw new LoanRejectedException("The person has not enough working time");
         }
 
-        cDto.setIsInsuranceEnabled(sdDto.getIsInsuranceEnable());
+        cDto.setIsInsuranceEnabled(sdDto.getIsInsuranceEnabled());
         cDto.setIsSalaryClient(sdDto.getIsSalaryClient());
         cDto.setTerm(sdDto.getTerm());
 
         BigDecimal totalAmount = sdDto.getAmount()
-                .add(new BigDecimal(100000L * cDto.getIsInsuranceEnabled().compareTo(false)));
+                .add(new BigDecimal(100000L * sdDto.getIsInsuranceEnabled().compareTo(false)));
         cDto.setAmount(totalAmount);
 
         BigDecimal totalRate = loanBaseRate
@@ -112,21 +106,14 @@ public class CalculatorService {
                 .add(sdDto.getMaritalStatus().getRateAdd());
         cDto.setRate(totalRate);
 
-        if (cDto.getIsInsuranceEnabled()) {
+        if (sdDto.getIsInsuranceEnabled()) {
             cDto.setRate(cDto.getRate().subtract(new BigDecimal(3)));
         }
-        if (cDto.getIsSalaryClient()) {
+        if (sdDto.getIsSalaryClient()) {
             cDto.setRate(cDto.getRate().subtract(BigDecimal.ONE));
         }
 
-        BigDecimal monthlyRate = totalRate.divide(new BigDecimal(1200), 20, RoundingMode.HALF_UP);
-        BigDecimal numerator = totalAmount
-                .multiply(monthlyRate)
-                .multiply((BigDecimal.ONE.add(monthlyRate)).pow(cDto.getTerm()));
-        BigDecimal denominator = ((BigDecimal.ONE.add(monthlyRate)).pow(sdDto.getTerm()))
-                .subtract(BigDecimal.ONE);
-
-        BigDecimal totalMonthlyPayment = numerator.divide(denominator, 20, RoundingMode.HALF_UP);
+        BigDecimal totalMonthlyPayment = getMonthlyPayment(totalRate, totalAmount, sdDto.getTerm());
         cDto.setMonthlyPayment(totalMonthlyPayment);
 
         BigDecimal totalPsk = totalMonthlyPayment.multiply(new BigDecimal(sdDto.getTerm()));
@@ -181,6 +168,17 @@ public class CalculatorService {
         doRounding(cDto);
 
         return list;
+    }
+
+    private BigDecimal getMonthlyPayment(BigDecimal totalRate, BigDecimal totalAmount, Integer term) {
+        BigDecimal monthlyRate = totalRate.divide(new BigDecimal(1200), 20, RoundingMode.HALF_UP);
+        BigDecimal numerator = totalAmount
+                .multiply(monthlyRate)
+                .multiply((BigDecimal.ONE.add(monthlyRate)).pow(term));
+        BigDecimal denominator = ((BigDecimal.ONE.add(monthlyRate)).pow(term))
+                .subtract(BigDecimal.ONE);
+
+        return numerator.divide(denominator, 20, RoundingMode.HALF_UP);
     }
 
     private void doRounding(CreditDto cDto, PaymentScheduleElementDto pseDto) {

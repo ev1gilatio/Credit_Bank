@@ -41,13 +41,13 @@ public class CalculatorController {
     }
 
     @ExceptionHandler(TooYoungForCreditException.class)
-    public ResponseEntity<ErrorMessage> handleException(TooYoungForCreditException e, WebRequest r) {
+    private ResponseEntity<ErrorMessage> handleException(TooYoungForCreditException e, WebRequest r) {
 
         return badRequestResponse(e, r);
     }
 
     @ExceptionHandler(LoanRejectedException.class)
-    public ResponseEntity<ErrorMessage> handleException(LoanRejectedException e, WebRequest r) {
+    private ResponseEntity<ErrorMessage> handleException(LoanRejectedException e, WebRequest r) {
 
         return badRequestResponse(e, r);
     }

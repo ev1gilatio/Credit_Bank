@@ -206,7 +206,7 @@ public class CalculatorServiceTest {
         sdDto.setMaritalStatus(MaritalStatus.NOT_MARRIED);
         sdDto.setEmployment(eDto);
         sdDto.setAccountNumber("AccNumber");
-        sdDto.setIsInsuranceEnable(false);
+        sdDto.setIsInsuranceEnabled(false);
         sdDto.setIsSalaryClient(false);
 
         return sdDto;
