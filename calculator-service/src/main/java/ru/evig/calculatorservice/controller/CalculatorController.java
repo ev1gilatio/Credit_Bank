@@ -8,12 +8,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
-import ru.evig.calculatorservice.Exception.LoanRejectedException;
-import ru.evig.calculatorservice.Exception.TooYoungForCreditException;
 import ru.evig.calculatorservice.dto.CreditDto;
 import ru.evig.calculatorservice.dto.LoanOfferDto;
 import ru.evig.calculatorservice.dto.LoanStatementRequestDto;
 import ru.evig.calculatorservice.dto.ScoringDataDto;
+import ru.evig.calculatorservice.exception.LoanRejectedException;
+import ru.evig.calculatorservice.exception.TooYoungForCreditException;
 import ru.evig.calculatorservice.service.CalculatorService;
 
 import javax.validation.Valid;
