@@ -4,10 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import ru.evig.calculatorservice.Exception.LoanRejectedException;
-import ru.evig.calculatorservice.Exception.TooYoungForCreditException;
 import ru.evig.calculatorservice.dto.*;
 import ru.evig.calculatorservice.enums.EmploymentStatus;
+import ru.evig.calculatorservice.exception.LoanRejectedException;
+import ru.evig.calculatorservice.exception.TooYoungForCreditException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
