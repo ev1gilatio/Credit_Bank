@@ -1,7 +1,6 @@
 package ru.evig.calculatorservice.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.evig.calculatorservice.dto.*;
@@ -17,17 +16,33 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class CalculatorService {
 
     @Value("${loanBaseRate}")
     private BigDecimal loanBaseRate;
-
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Integer minAge = 18;
+    private final Integer maxAge = 65;
+    private final Integer minTotalWorkExp = 18;
+    private final Integer minCurrentWorkExp = 3;
+    private final Integer insuranceLoanAdd = 100000;
+    private final Integer insuranceRateAdd = 3;
+    private final BigDecimal salaryMultiplier = new BigDecimal(25);
 
     public List<LoanOfferDto> getLoanOfferDtoList(LoanStatementRequestDto lsrDto) {
         log.info("Input data for getLoanOfferDto = " + lsrDto);
 
-        if (LocalDate.from(lsrDto.getBirthday()).until(LocalDate.now(), ChronoUnit.YEARS) < 18) {
+        return makeLoanOfferDtoList(lsrDto);
+    }
+
+    public CreditDto getCreditDto(ScoringDataDto sdDto) {
+        log.info("Input data for getCreditDto = " + sdDto);
+
+        return makeCreditDto(sdDto);
+    }
+
+    private List<LoanOfferDto> makeLoanOfferDtoList(LoanStatementRequestDto lsrDto) {
+        if (LocalDate.from(lsrDto.getBirthday()).until(LocalDate.now(), ChronoUnit.YEARS) < minAge) {
             throw new TooYoungForCreditException("The person is younger than 18");
         }
 
@@ -35,12 +50,12 @@ public class CalculatorService {
 
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 2; j++) {
-                BigDecimal isInsuranceLoanAdd = new BigDecimal(100000 * (i % 2));
+                BigDecimal isInsuranceLoanAdd = new BigDecimal(insuranceLoanAdd * (i % 2));
                 BigDecimal totalAmount = lsrDto.getAmount().add(isInsuranceLoanAdd);
-                BigDecimal isInsuranceRateAdd = new BigDecimal(3 * (i % 2));
+                BigDecimal isInsuranceRateAdd = new BigDecimal(insuranceRateAdd * (i % 2));
                 BigDecimal isSalaryClientRateAdd = new BigDecimal(j % 2);
                 BigDecimal totalRate = loanBaseRate.subtract(isInsuranceRateAdd).subtract(isSalaryClientRateAdd);
-                BigDecimal totalMonthlyPayment = getMonthlyPayment(totalRate, totalAmount, lsrDto.getTerm());
+                BigDecimal totalMonthlyPayment = calculateMonthlyPayment(totalRate, totalAmount, lsrDto.getTerm());
 
                 LoanOfferDto loDto = LoanOfferDto.builder()
                         .statementId(UUID.randomUUID())
@@ -55,44 +70,42 @@ public class CalculatorService {
 
                 list.add(loDto);
 
-                log.info("list[" + (list.size() - 1) + "] in getLoanOfferDto = " + loDto);
+                log.info("list[" + (list.size() - 1) + "] in makeLoanOfferDtoList = " + loDto);
             }
         }
 
         Comparator<LoanOfferDto> compareByRate = Comparator
                 .comparing(LoanOfferDto::getRate);
 
-        log.info("Output data from getLoanOfferDto = " + list);
+        log.info("Output data from makeLoanOfferDtoList = " + list);
 
         return list.stream()
                 .sorted(compareByRate)
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public CreditDto getCreditDto(ScoringDataDto sdDto) {
-        log.info("Input data for getCreditDto = " + sdDto);
-
+    private CreditDto makeCreditDto(ScoringDataDto sdDto) {
         if (sdDto.getEmployment().getEmploymentStatus() == EmploymentStatus.UNEMPLOYED) {
             throw new LoanRejectedException("Person is unemployed");
-        } else if (!(sdDto.getAmount().compareTo(sdDto.getEmployment().getSalary().multiply(new BigDecimal(25))) < 0)) {
-            throw new LoanRejectedException("Loan amount is more than 25 salaries");
-        } else if (LocalDate.from(sdDto.getBirthday()).until(LocalDate.now(), ChronoUnit.YEARS) < 20
-                || LocalDate.from(sdDto.getBirthday()).until(LocalDate.now(), ChronoUnit.YEARS) > 65) {
-            throw new LoanRejectedException("The person is younger than 20 or older than 65");
-        } else if (sdDto.getEmployment().getWorkExperienceTotal() < 18
-                || sdDto.getEmployment().getWorkExperienceCurrent() < 3) {
+        } else if (!(sdDto.getAmount().compareTo(sdDto.getEmployment().getSalary().multiply(salaryMultiplier)) < 0)) {
+            throw new LoanRejectedException("Loan amount is more than " + salaryMultiplier + " salaries");
+        } else if (LocalDate.from(sdDto.getBirthday()).until(LocalDate.now(), ChronoUnit.YEARS) < minAge
+                || LocalDate.from(sdDto.getBirthday()).until(LocalDate.now(), ChronoUnit.YEARS) > maxAge) {
+            throw new LoanRejectedException("The person is younger than " + minAge + " or older than " + maxAge);
+        } else if (sdDto.getEmployment().getWorkExperienceTotal() < minTotalWorkExp
+                || sdDto.getEmployment().getWorkExperienceCurrent() < minCurrentWorkExp) {
             throw new LoanRejectedException("The person has not enough working time");
         }
 
         BigDecimal totalAmount = sdDto.getAmount()
-                .add(new BigDecimal(100000L * sdDto.getIsInsuranceEnabled().compareTo(false)));
+                .add(new BigDecimal(insuranceLoanAdd * sdDto.getIsInsuranceEnabled().compareTo(false)));
         BigDecimal totalRate = loanBaseRate
                 .add(sdDto.getEmployment().getEmploymentStatus().getRateAdd())
                 .add(sdDto.getEmployment().getPosition().getRateAdd())
                 .add(sdDto.getMaritalStatus().getRateAdd())
-                .subtract(new BigDecimal(3 * sdDto.getIsInsuranceEnabled().compareTo(false)))
+                .subtract(new BigDecimal(insuranceRateAdd * sdDto.getIsInsuranceEnabled().compareTo(false)))
                 .subtract(new BigDecimal(sdDto.getIsSalaryClient().compareTo(false)));
-        BigDecimal totalMonthlyPayment = getMonthlyPayment(totalRate, totalAmount, sdDto.getTerm());
+        BigDecimal totalMonthlyPayment = calculateMonthlyPayment(totalRate, totalAmount, sdDto.getTerm());
         BigDecimal totalPsk = totalMonthlyPayment.multiply(new BigDecimal(sdDto.getTerm()));
 
         CreditDto cDto = CreditDto.builder()
@@ -103,40 +116,42 @@ public class CalculatorService {
                 .psk(totalPsk)
                 .isInsuranceEnabled(sdDto.getIsInsuranceEnabled())
                 .isSalaryClient(sdDto.getIsSalaryClient())
-                .paymentSchedule(Collections.emptyList())
+                .paymentSchedule(makePaymentScheduleList(totalAmount, sdDto.getTerm(), totalRate, totalMonthlyPayment))
                 .build();
-        cDto.setPaymentSchedule(getPaymentScheduleList(cDto));
 
-        log.info("Output data from getCreditDto = " + cDto);
+        doRounding(cDto);
+
+        log.info("Output data from makeCreditDto = " + cDto);
 
         return cDto;
     }
 
-    private List<PaymentScheduleElementDto> getPaymentScheduleList(CreditDto cDto) {
-        log.info("Input data for getPaymentScheduleList = " + cDto);
-
+    private List<PaymentScheduleElementDto> makePaymentScheduleList(BigDecimal amount,
+                                                                    Integer term,
+                                                                    BigDecimal rate,
+                                                                    BigDecimal monthlyPayment) {
         List<PaymentScheduleElementDto> list = new ArrayList<>();
 
-        BigDecimal amount = cDto.getAmount();
-        for (int i = 1; i < cDto.getTerm() + 1; i++) {
-            BigDecimal totalInterestPayment = amount
-                    .multiply(cDto.getRate())
+        BigDecimal localAmount = amount;
+        for (int i = 1; i < term + 1; i++) {
+            BigDecimal totalInterestPayment = localAmount
+                    .multiply(rate)
                     .divide(new BigDecimal(1200), 20, RoundingMode.HALF_UP);
-            BigDecimal totalDebtPayment = cDto.getMonthlyPayment().subtract(totalInterestPayment);
-            BigDecimal totalRemainingDebt = amount.subtract(totalDebtPayment);
+            BigDecimal totalDebtPayment = monthlyPayment.subtract(totalInterestPayment);
+            BigDecimal totalRemainingDebt = localAmount.subtract(totalDebtPayment);
 
             PaymentScheduleElementDto pseDto = PaymentScheduleElementDto.builder()
                     .number(i)
                     .date(LocalDate.now().plusMonths(i))
-                    .totalPayment(cDto.getMonthlyPayment())
+                    .totalPayment(monthlyPayment)
                     .interestPayment(totalInterestPayment)
                     .debtPayment(totalDebtPayment)
                     .remainingDebt(totalRemainingDebt)
                     .build();
 
-            amount = amount.subtract(pseDto.getDebtPayment());
+            localAmount = localAmount.subtract(pseDto.getDebtPayment());
 
-            doRounding(cDto, pseDto);
+            doRounding(pseDto);
 
             list.add(pseDto);
 
@@ -145,12 +160,10 @@ public class CalculatorService {
 
         log.info("Output data from getPaymentScheduleList = " + list);
 
-        doRounding(cDto);
-
         return list;
     }
 
-    private BigDecimal getMonthlyPayment(BigDecimal totalRate, BigDecimal totalAmount, Integer term) {
+    private BigDecimal calculateMonthlyPayment(BigDecimal totalRate, BigDecimal totalAmount, Integer term) {
         BigDecimal monthlyRate = totalRate.divide(new BigDecimal(1200), 20, RoundingMode.HALF_UP);
         BigDecimal numerator = totalAmount
                 .multiply(monthlyRate)
@@ -161,8 +174,8 @@ public class CalculatorService {
         return numerator.divide(denominator, 20, RoundingMode.HALF_UP);
     }
 
-    private void doRounding(CreditDto cDto, PaymentScheduleElementDto pseDto) {
-        pseDto.setTotalPayment(cDto.getMonthlyPayment().setScale(2, RoundingMode.HALF_UP));
+    private void doRounding(PaymentScheduleElementDto pseDto) {
+        pseDto.setTotalPayment(pseDto.getTotalPayment().setScale(2, RoundingMode.HALF_UP));
         pseDto.setInterestPayment(pseDto.getInterestPayment().setScale(2, RoundingMode.HALF_UP));
         pseDto.setDebtPayment(pseDto.getDebtPayment().setScale(2, RoundingMode.HALF_UP));
         pseDto.setRemainingDebt(pseDto.getRemainingDebt().setScale(2, RoundingMode.HALF_UP));

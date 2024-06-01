@@ -1,5 +1,6 @@
 package ru.evig.calculatorservice.dto;
 
+import lombok.Builder;
 import lombok.Data;
 import org.springframework.lang.Nullable;
 import ru.evig.calculatorservice.enums.Gender;
@@ -10,17 +11,22 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
+@Builder
 public class ScoringDataDto {
 
+    @NotNull
     @Min(30000)
     private BigDecimal amount;
 
+    @NotNull
     @Min(6)
     private Integer term;
 
+    @NotNull
     @Pattern(regexp = "^[a-zA-Z]{2,30}$")
     private String firstName;
 
+    @NotNull
     @Pattern(regexp = "^[a-zA-Z]{2,30}$")
     private String lastName;
 
@@ -32,18 +38,23 @@ public class ScoringDataDto {
     private Gender gender;
 
     //гггг-мм-дд
+    @NotNull
     @Past
     private LocalDate birthday;
 
+    @NotNull
     @Pattern(regexp = "^[0-9]{4}$")
     private String passportSeries;
 
+    @NotNull
     @Pattern(regexp = "^[0-9]{6}$")
     private String passportNumber;
 
+    @NotNull
     @Past
     private LocalDate passportIssueDate;
 
+    @NotNull
     @Pattern(regexp = "^[a-zA-Z ]{1,256}$")
     private String passportIssueBranch;
 
@@ -53,7 +64,6 @@ public class ScoringDataDto {
     @Nullable
     private Integer dependentAmount;
 
-    @NotNull
     private EmploymentDto employment;
 
     @NotNull

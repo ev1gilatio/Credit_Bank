@@ -2,9 +2,9 @@ package ru.evig.calculatorservice.service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import ru.evig.calculatorservice.Exception.LoanRejectedException;
-import ru.evig.calculatorservice.Exception.TooYoungForCreditException;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import ru.evig.calculatorservice.exception.LoanRejectedException;
+import ru.evig.calculatorservice.exception.TooYoungForCreditException;
 import ru.evig.calculatorservice.dto.*;
 import ru.evig.calculatorservice.enums.EmploymentPosition;
 import ru.evig.calculatorservice.enums.EmploymentStatus;
@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@WebMvcTest(CalculatorService.class)
 public class CalculatorServiceTest {
 
     @Autowired
@@ -97,7 +97,7 @@ public class CalculatorServiceTest {
                         12))
         );
 
-        assertTrue(thrown.getMessage().contains("The person is younger than 20 or older than 65"));
+        assertTrue(thrown.getMessage().contains("The person is younger than 18 or older than 65"));
     }
 
     @Test
@@ -112,7 +112,7 @@ public class CalculatorServiceTest {
                         12))
         );
 
-        assertTrue(thrown.getMessage().contains("The person is younger than 20 or older than 65"));
+        assertTrue(thrown.getMessage().contains("The person is younger than 18 or older than 65"));
     }
 
     @Test
@@ -164,18 +164,17 @@ public class CalculatorServiceTest {
     }
 
     private LoanStatementRequestDto getLsrDtoWithDifferentYear(int birthYear) {
-        LoanStatementRequestDto lsrDto = new LoanStatementRequestDto();
 
-        lsrDto.setAmount(new BigDecimal(30000));
-        lsrDto.setTerm(6);
-        lsrDto.setFirstName("Vladimir");
-        lsrDto.setLastName("Vladimir");
-        lsrDto.setEmail("vov@vov.vov");
-        lsrDto.setBirthday(LocalDate.of(birthYear, 4, 27));
-        lsrDto.setPassportSeries("0123");
-        lsrDto.setPassportNumber("456789");
-
-        return lsrDto;
+        return LoanStatementRequestDto.builder()
+                .amount(new BigDecimal(30000))
+                .term(6)
+                .firstName("Vladimir")
+                .lastName("Vladimir")
+                .email("vov@vov.vov")
+                .birthday(LocalDate.of(birthYear, 4, 27))
+                .passportSeries("0123")
+                .passportNumber("456789")
+                .build();
     }
 
     private ScoringDataDto getSdDto(EmploymentStatus status,
@@ -183,32 +182,31 @@ public class CalculatorServiceTest {
                                     int birthYear,
                                     int workExpTotal,
                                     int workExpCurrent) {
-        EmploymentDto eDto = new EmploymentDto();
-        ScoringDataDto sdDto = new ScoringDataDto();
+        EmploymentDto eDto = EmploymentDto.builder()
+                .employmentStatus(status)
+                .employmentINN("INN")
+                .salary(salary)
+                .position(EmploymentPosition.SENIOR)
+                .workExperienceTotal(workExpTotal)
+                .workExperienceCurrent(workExpCurrent)
+                .build();
 
-        eDto.setEmploymentStatus(status);
-        eDto.setEmploymentINN("INN");
-        eDto.setSalary(salary);
-        eDto.setPosition(EmploymentPosition.MILORD);
-        eDto.setWorkExperienceTotal(workExpTotal);
-        eDto.setWorkExperienceCurrent(workExpCurrent);
-
-        sdDto.setAmount(new BigDecimal(30000));
-        sdDto.setTerm(6);
-        sdDto.setFirstName("Vladimir");
-        sdDto.setLastName("Vladimir");
-        sdDto.setGender(Gender.MALE);
-        sdDto.setBirthday(LocalDate.of(birthYear, 4, 27));
-        sdDto.setPassportSeries("0123");
-        sdDto.setPassportNumber("456789");
-        sdDto.setPassportIssueDate(LocalDate.of(2020, 4, 27));
-        sdDto.setPassportIssueBranch("SBp NeoFlex");
-        sdDto.setMaritalStatus(MaritalStatus.NOT_MARRIED);
-        sdDto.setEmployment(eDto);
-        sdDto.setAccountNumber("AccNumber");
-        sdDto.setIsInsuranceEnabled(false);
-        sdDto.setIsSalaryClient(false);
-
-        return sdDto;
+        return ScoringDataDto.builder()
+                .amount(new BigDecimal(30000))
+                .term(6)
+                .firstName("Vladimir")
+                .lastName("Vladimir")
+                .gender(Gender.MALE)
+                .birthday(LocalDate.of(birthYear, 4, 27))
+                .passportSeries("0123")
+                .passportNumber("456789")
+                .passportIssueDate(LocalDate.of(2020, 4, 27))
+                .passportIssueBranch("SBp NeoFlex")
+                .maritalStatus(MaritalStatus.NOT_MARRIED)
+                .employment(eDto)
+                .accountNumber("AccNumber")
+                .isInsuranceEnabled(false)
+                .isSalaryClient(false)
+                .build();
     }
 }

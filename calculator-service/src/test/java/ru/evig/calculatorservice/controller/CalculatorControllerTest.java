@@ -38,69 +38,79 @@ public class CalculatorControllerTest {
     @Test
     void shouldReturnLoanOfferDtoList() throws Exception {
         LoanStatementRequestDto lsrDto = getLsrDto();
-
         String json = mapper.writeValueAsString(lsrDto);
         mvc.perform(post("/calculator/offers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .characterEncoding(StandardCharsets.UTF_8)
                         .content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+
+        json = mapper.writeValueAsString(service.getLoanOfferDtoList(lsrDto));
+        mvc.perform(post("/calculator/offers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .content(json).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void shouldReturnCreditDto() throws Exception {
         ScoringDataDto sdDto = getSdDto();
-
         String json = mapper.writeValueAsString(sdDto);
         mvc.perform(post("/calculator/calc")
                         .contentType(MediaType.APPLICATION_JSON)
                         .characterEncoding(StandardCharsets.UTF_8)
                         .content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+
+        json = mapper.writeValueAsString(service.getCreditDto(sdDto));
+        mvc.perform(post("/calculator/calc")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .content(json).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
     }
 
     private LoanStatementRequestDto getLsrDto() {
-        LoanStatementRequestDto lsrDto = new LoanStatementRequestDto();
 
-        lsrDto.setAmount(new BigDecimal(30000));
-        lsrDto.setTerm(6);
-        lsrDto.setFirstName("Vladimir");
-        lsrDto.setLastName("Vladimir");
-        lsrDto.setEmail("vov@vov.vov");
-        lsrDto.setBirthday(LocalDate.of(2002, 4, 27));
-        lsrDto.setPassportSeries("0123");
-        lsrDto.setPassportNumber("456789");
-
-        return lsrDto;
+        return LoanStatementRequestDto.builder()
+                .amount(new BigDecimal(30000))
+                .term(6)
+                .firstName("Vladimir")
+                .lastName("Vladimir")
+                .email("vov@vov.vov")
+                .birthday(LocalDate.of(2002, 4, 27))
+                .passportSeries("0123")
+                .passportNumber("456789")
+                .build();
     }
 
     private ScoringDataDto getSdDto() {
-        EmploymentDto eDto = new EmploymentDto();
-        ScoringDataDto sdDto = new ScoringDataDto();
-
-        eDto.setEmploymentStatus(EmploymentStatus.EMPLOYEE);
-        eDto.setEmploymentINN("INN");
-        eDto.setSalary(new BigDecimal(100000));
-        eDto.setPosition(EmploymentPosition.MILORD);
-        eDto.setWorkExperienceTotal(24);
-        eDto.setWorkExperienceCurrent(12);
-
-        sdDto.setAmount(new BigDecimal(30000));
-        sdDto.setTerm(6);
-        sdDto.setFirstName("Vladimir");
-        sdDto.setLastName("Vladimir");
-        sdDto.setGender(Gender.MALE);
-        sdDto.setBirthday(LocalDate.of(2002, 4, 27));
-        sdDto.setPassportSeries("0123");
-        sdDto.setPassportNumber("456789");
-        sdDto.setPassportIssueDate(LocalDate.of(2020, 4, 27));
-        sdDto.setPassportIssueBranch("SBp NeoFlex");
-        sdDto.setMaritalStatus(MaritalStatus.NOT_MARRIED);
-        sdDto.setEmployment(eDto);
-        sdDto.setAccountNumber("AccNumber");
-        sdDto.setIsInsuranceEnabled(false);
-        sdDto.setIsSalaryClient(false);
-
-        return sdDto;
+        EmploymentDto eDto = EmploymentDto.builder()
+                .employmentStatus(EmploymentStatus.EMPLOYEE)
+                .employmentINN("INN")
+                .salary(new BigDecimal(100000))
+                .position(EmploymentPosition.SENIOR)
+                .workExperienceTotal(24)
+                .workExperienceCurrent(12)
+                .build();
+        
+        return ScoringDataDto.builder()
+                .amount(new BigDecimal(30000))
+                .term(6)
+                .firstName("Vladimir")
+                .lastName("Vladimir")
+                .gender(Gender.MALE)
+                .birthday(LocalDate.of(2002, 4, 27))
+                .passportSeries("0123")
+                .passportNumber("456789")
+                .passportIssueDate(LocalDate.of(2020, 4, 27))
+                .passportIssueBranch("SBp NeoFlex")
+                .maritalStatus(MaritalStatus.NOT_MARRIED)
+                .employment(eDto)
+                .accountNumber("AccNumber")
+                .isInsuranceEnabled(false)
+                .isSalaryClient(false)
+                .build();
     }
 }

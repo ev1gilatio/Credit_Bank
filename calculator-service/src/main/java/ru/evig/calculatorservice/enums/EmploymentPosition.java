@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 public enum EmploymentPosition {
     JUNIOR (new BigDecimal(-1)),
     MIDDLE (new BigDecimal(-2)),
-    MILORD (new BigDecimal(-3));
+    SENIOR (new BigDecimal(-3));
 
     private final BigDecimal rateAdd;
 
