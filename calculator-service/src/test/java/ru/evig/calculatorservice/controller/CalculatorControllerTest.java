@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CalculatorController.class)
@@ -37,46 +38,69 @@ public class CalculatorControllerTest {
 
     @Test
     void shouldReturnLoanOfferDtoList() throws Exception {
-        LoanStatementRequestDto lsrDto = getLsrDto();
-        String json = mapper.writeValueAsString(lsrDto);
-        mvc.perform(post("/calculator/offers")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .content(json).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+        String json = mapper.writeValueAsString(getLsrDto("Vladimir"));
 
-        json = mapper.writeValueAsString(service.getLoanOfferDtoList(lsrDto));
-        mvc.perform(post("/calculator/offers")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .characterEncoding(StandardCharsets.UTF_8)
-                        .content(json).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+        performOkRequest(json, "/calculator/offers");
+    }
+
+    @Test
+    void shouldReturnHttpMessageNotReadableExceptionInsteadOfLoanOfferDtoList() throws Exception {
+        String json = mapper.writeValueAsString(service.getLoanOfferDtoList(getLsrDto(null)));
+
+        performBadRequest(json, "/calculator/offers", "Invalid JSON payload");
+    }
+
+    @Test
+    void shouldReturnMethodArgumentNotValidExceptionInsteadOfLoanOfferDtoList() throws Exception {
+        String json = mapper.writeValueAsString(getLsrDto(null));
+
+        performBadRequest(json, "/calculator/offers", "{\"firstName\":\"must not be null\"}");
     }
 
     @Test
     void shouldReturnCreditDto() throws Exception {
-        ScoringDataDto sdDto = getSdDto();
-        String json = mapper.writeValueAsString(sdDto);
-        mvc.perform(post("/calculator/calc")
+        String json = mapper.writeValueAsString(getSdDto("Vladimir"));
+
+        performOkRequest(json, "/calculator/calc");
+    }
+
+    @Test
+    void shouldReturnHttpMessageNotReadableExceptionInsteadOfCreditDto() throws Exception {
+        String json = mapper.writeValueAsString(service.getCreditDto(getSdDto(null)));
+
+        performBadRequest(json, "/calculator/calc", "Invalid JSON payload");
+    }
+
+    @Test
+    void shouldReturnMethodArgumentNotValidExceptionInsteadOfCreditDto() throws Exception {
+        String json = mapper.writeValueAsString(getSdDto(null));
+
+        performBadRequest(json, "/calculator/calc", "{\"firstName\":\"must not be null\"}");
+    }
+
+    private void performOkRequest(String json, String url) throws Exception {
+        mvc.perform(post(url)
                         .contentType(MediaType.APPLICATION_JSON)
                         .characterEncoding(StandardCharsets.UTF_8)
                         .content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+    }
 
-        json = mapper.writeValueAsString(service.getCreditDto(sdDto));
-        mvc.perform(post("/calculator/calc")
+    private void performBadRequest(String json, String url, String expectedResponse) throws Exception {
+        mvc.perform(post(url)
                         .contentType(MediaType.APPLICATION_JSON)
                         .characterEncoding(StandardCharsets.UTF_8)
                         .content(json).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(expectedResponse));
     }
 
-    private LoanStatementRequestDto getLsrDto() {
+    private LoanStatementRequestDto getLsrDto(String firstName) {
 
         return LoanStatementRequestDto.builder()
                 .amount(new BigDecimal(30000))
                 .term(6)
-                .firstName("Vladimir")
+                .firstName(firstName)
                 .lastName("Vladimir")
                 .email("vov@vov.vov")
                 .birthday(LocalDate.of(2002, 4, 27))
@@ -85,7 +109,7 @@ public class CalculatorControllerTest {
                 .build();
     }
 
-    private ScoringDataDto getSdDto() {
+    private ScoringDataDto getSdDto(String firstName) {
         EmploymentDto eDto = EmploymentDto.builder()
                 .employmentStatus(EmploymentStatus.EMPLOYEE)
                 .employmentINN("INN")
@@ -94,11 +118,11 @@ public class CalculatorControllerTest {
                 .workExperienceTotal(24)
                 .workExperienceCurrent(12)
                 .build();
-        
+
         return ScoringDataDto.builder()
                 .amount(new BigDecimal(30000))
                 .term(6)
-                .firstName("Vladimir")
+                .firstName(firstName)
                 .lastName("Vladimir")
                 .gender(Gender.MALE)
                 .birthday(LocalDate.of(2002, 4, 27))

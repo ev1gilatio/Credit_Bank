@@ -1,7 +1,6 @@
 package ru.evig.calculatorservice.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springdoc.api.ErrorMessage;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -21,33 +20,35 @@ import java.util.Map;
 public class ExceptionApiHandler {
 
     @ExceptionHandler(TooYoungForCreditException.class)
-    private ResponseEntity<ErrorMessage> handleException(TooYoungForCreditException e, WebRequest r) {
+    private ResponseEntity<String> handleException(TooYoungForCreditException e, WebRequest r) {
+        logging(e, r);
 
-        return badRequestResponse(e, r);
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(LoanRejectedException.class)
-    private ResponseEntity<ErrorMessage> handleException(LoanRejectedException e, WebRequest r) {
+    private ResponseEntity<String> handleException(LoanRejectedException e, WebRequest r) {
+        logging(e, r);
 
-        return badRequestResponse(e, r);
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(NullPointerException.class)
     private ResponseEntity<String> handleException(NullPointerException e, WebRequest r) {
-        createLoggMessage(e, r);
+        logging(e, r);
 
         return new ResponseEntity<>("Fields cannot be null", HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     private ResponseEntity<String> handleException(HttpMessageNotReadableException e, WebRequest r) {
-        createLoggMessage(e, r);
+        logging(e, r);
 
         return new ResponseEntity<>("Invalid JSON payload", HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    private ResponseEntity<Object> handleException(MethodArgumentNotValidException e, WebRequest r) {
+    private ResponseEntity<Map<String, String>> handleException(MethodArgumentNotValidException e, WebRequest r) {
         Map<String, String> errors = new HashMap<>();
         e.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName = ((FieldError) error).getField();
@@ -55,21 +56,15 @@ public class ExceptionApiHandler {
             errors.put(fieldName, errorMessage);
         });
 
-        createLoggMessage(e, r);
+        logging(e, r);
 
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
-    private ResponseEntity<ErrorMessage> badRequestResponse(Exception e, WebRequest r) {
-        createLoggMessage(e, r);
-
-        return new ResponseEntity<>(new ErrorMessage(e.getMessage()), HttpStatus.BAD_REQUEST);
-    }
-
-    private void createLoggMessage(Exception e, WebRequest r) {
+    private void logging(Exception e, WebRequest r) {
         String logMessage = String.format("Exception: %s, message: %s, request: %s",
                 e.getClass().getSimpleName(), e.getMessage(), r.getDescription(false));
 
-        log.error(logMessage, e);
+        log.error(logMessage);
     }
 }

@@ -1,6 +1,8 @@
 package ru.evig.calculatorservice.service;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import ru.evig.calculatorservice.exception.LoanRejectedException;
@@ -85,29 +87,15 @@ public class CalculatorServiceTest {
         assertTrue(thrown.getMessage().contains("Loan amount is more than 25 salaries"));
     }
 
-    @Test
-    void shouldReturnLoanRejectedExceptionBecauseOfOld() {
+    @ParameterizedTest
+    @ValueSource(ints = {1900, 2020})
+    void shouldReturnLoanRejectedExceptionBecauseOfYoung(int birthYear) {
         LoanRejectedException thrown = assertThrows(
                 LoanRejectedException.class,
                 () -> service.getCreditDto(getSdDto(
                         EmploymentStatus.EMPLOYEE,
                         new BigDecimal(100000),
-                        1900,
-                        24,
-                        12))
-        );
-
-        assertTrue(thrown.getMessage().contains("The person is younger than 18 or older than 65"));
-    }
-
-    @Test
-    void shouldReturnLoanRejectedExceptionBecauseOfYoung() {
-        LoanRejectedException thrown = assertThrows(
-                LoanRejectedException.class,
-                () -> service.getCreditDto(getSdDto(
-                        EmploymentStatus.EMPLOYEE,
-                        new BigDecimal(100000),
-                        2020,
+                        birthYear,
                         24,
                         12))
         );

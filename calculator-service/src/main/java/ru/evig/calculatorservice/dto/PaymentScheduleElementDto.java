@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
-@Builder
+@Builder(toBuilder = true)
 public class PaymentScheduleElementDto {
     private Integer number;
     private LocalDate date;

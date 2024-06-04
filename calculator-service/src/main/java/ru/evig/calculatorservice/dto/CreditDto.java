@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Data
-@Builder
+@Builder(toBuilder = true)
 public class CreditDto {
     private BigDecimal amount;
     private Integer term;
