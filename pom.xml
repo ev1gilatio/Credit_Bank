@@ -9,6 +9,7 @@
 
     <modules>
         <module>calculator-service</module>
+        <module>deal-service</module>
     </modules>
 
     <parent>
