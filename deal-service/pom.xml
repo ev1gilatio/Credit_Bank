@@ -97,6 +97,12 @@
             <artifactId>spring-cloud-starter-loadbalancer</artifactId>
             <version>4.1.2</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.vladmihalcea</groupId>
+            <artifactId>hibernate-types-52</artifactId>
+            <version>2.20.0</version>
+        </dependency>
     </dependencies>
 
     <build>

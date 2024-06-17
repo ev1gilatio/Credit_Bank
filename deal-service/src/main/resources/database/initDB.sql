@@ -24,7 +24,7 @@ create table if not exists credit
     psk               decimal,
     payment_schedule  jsonb,
     insurance_enabled boolean,
-    salary_client     jsonb,
+    salary_client     boolean,
     credit_status     varchar(255)
 );
 
@@ -37,6 +37,9 @@ create table if not exists statement
     creation_date  timestamp,
     applied_offer  jsonb,
     sign_date      timestamp,
-    ses_code        varchar(255),
-    status_history jsonb
+    ses_code       varchar(255),
+    status_history jsonb,
+
+    constraint FK_client_id foreign key (client_id) references client (client_id),
+    constraint FK_credit_id foreign key (credit_id) references credit (credit_id)
 );

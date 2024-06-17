@@ -1,14 +1,16 @@
 package ru.evig.dealservice.dto;
 
+import lombok.Builder;
 import lombok.Data;
+import ru.evig.dealservice.enums.ApplicationStatus;
 import ru.evig.dealservice.enums.ChangeType;
-import ru.evig.dealservice.enums.StatementStatus;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
+@Builder
 public class StatementStatusHistoryDto {
-    private StatementStatus status;
-    private LocalDate time;
+    private ApplicationStatus status;
+    private LocalDateTime time;
     private ChangeType changeType;
 }
