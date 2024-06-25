@@ -9,7 +9,7 @@ import ru.evig.dealservice.dto.ScoringDataDto;
 
 import java.util.List;
 
-@FeignClient(value = "deal", url = "http://localhost:8080")
+@FeignClient(value = "deal", url = "${calculator-service.url}")
 public interface DealClient {
 
     @PostMapping(value = "/calculator/offers", consumes = "application/json")

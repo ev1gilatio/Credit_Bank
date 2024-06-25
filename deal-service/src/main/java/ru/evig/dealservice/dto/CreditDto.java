@@ -1,20 +1,23 @@
 package ru.evig.dealservice.dto;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Data
 @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreditDto {
     private BigDecimal amount;
     private Integer term;
     private BigDecimal monthlyPayment;
     private BigDecimal rate;
     private BigDecimal psk;
-    private Boolean isInsuranceEnabled;
-    private Boolean isSalaryClient;
+    private boolean isInsuranceEnabled;
+    private boolean isSalaryClient;
     private List<PaymentScheduleElementDto> paymentSchedule;
 }

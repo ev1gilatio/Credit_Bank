@@ -1,10 +1,7 @@
 package ru.evig.dealservice.entity;
 
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import ru.evig.dealservice.dto.EmploymentDto;
@@ -26,6 +23,7 @@ import java.util.UUID;
 public class Client {
 
     @Id
+    @GeneratedValue
     @Column(name = "client_id")
     private UUID id;
 

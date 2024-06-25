@@ -1,10 +1,7 @@
 package ru.evig.dealservice.entity;
 
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import ru.evig.dealservice.dto.PaymentScheduleElementDto;
@@ -25,6 +22,7 @@ import java.util.UUID;
 public class Credit {
 
     @Id
+    @GeneratedValue
     @Column(name = "credit_id")
     private UUID id;
 
@@ -48,10 +46,10 @@ public class Credit {
     private List<PaymentScheduleElementDto> paymentSchedule;
 
     @Column(name = "insurance_enabled")
-    private Boolean insuranceEnabled;
+    private boolean insuranceEnabled;
 
     @Column(name = "salary_client")
-    private Boolean salaryClient;
+    private boolean salaryClient;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "credit_status")

@@ -50,7 +50,6 @@ public class Statement {
     @Column(name = "applied_offer")
     private LoanOfferDto appliedOffer;
 
-    @CreationTimestamp
     @Column(name = "sign_date")
     private LocalDateTime signDate;
 

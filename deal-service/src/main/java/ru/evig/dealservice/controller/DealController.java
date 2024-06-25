@@ -6,9 +6,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.evig.dealservice.DealClient;
-import ru.evig.dealservice.dto.FinishRegistrationRequestDto;
-import ru.evig.dealservice.dto.LoanOfferDto;
-import ru.evig.dealservice.dto.LoanStatementRequestDto;
+import ru.evig.dealservice.dto.*;
+import ru.evig.dealservice.entity.Client;
+import ru.evig.dealservice.entity.Statement;
 import ru.evig.dealservice.service.DealService;
 
 import javax.validation.Valid;
@@ -30,10 +30,12 @@ public class DealController {
             @ApiResponse(responseCode = "400", description = "Какие-то данные для прескоринга неудовлетворяют условиям")
     })
     @PostMapping("/statement")
-    private List<LoanOfferDto> makeLoanOfferList(@Valid @RequestBody LoanStatementRequestDto loanStatementRequestDto) {
-        service.createClient(loanStatementRequestDto);
+    private List<LoanOfferDto> getLoanOfferList(@Valid @RequestBody LoanStatementRequestDto lsrDto) {
+        List<LoanOfferDto> dealClientResponseList = dealClient.getLoanOfferDtoList(lsrDto);
+        Client client = service.createClient(lsrDto);
+        Statement statement = service.createStatement(client);
 
-        return service.getLoanOfferDtoList(dealClient.getLoanOfferDtoList(loanStatementRequestDto));
+        return service.getLoanOfferDtoList(dealClientResponseList, statement.getId());
     }
 
     @Operation(summary = "Выбор определенного предложения",
@@ -43,8 +45,8 @@ public class DealController {
             @ApiResponse(responseCode = "400", description = "Какие-то данные в LoanOfferDto неверны")
     })
     @PostMapping("/offer/select")
-    private void selectLoanOffer(@Valid @RequestBody LoanOfferDto loanOfferDto) {
-        service.selectLoanOffer(loanOfferDto);
+    private void selectLoanOffer(@Valid @RequestBody LoanOfferDto loDto) {
+        service.selectLoanOffer(loDto);
     }
 
     @Operation(summary = "Скоринг и сохранение в БД",
@@ -56,10 +58,11 @@ public class DealController {
             @ApiResponse(responseCode = "400", description = "Какие-то данные для скоринга неудовлетворяют условиям")
     })
     @PostMapping("/calculate/{statementId}")
-    private void makeCredit(@Valid @RequestBody FinishRegistrationRequestDto finishRegistrationRequestDto,
-                            @PathVariable String statementId) {
-        service.makeCredit(dealClient.getCreditDto(
-                service.getScoringDataDto(finishRegistrationRequestDto, statementId))
-        );
+    private void createCredit(@Valid @RequestBody FinishRegistrationRequestDto frrDto,
+                              @PathVariable String statementId) {
+        ScoringDataDto sdDto = service.getScoringDataDto(frrDto, statementId);
+        CreditDto dealClientCreditDto = dealClient.getCreditDto(sdDto);
+        service.completeBuildingClient(frrDto, statementId);
+        service.createCredit(dealClientCreditDto, statementId);
     }
 }
