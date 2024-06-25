@@ -7,8 +7,6 @@ import java.util.List;
 
 @Data
 @Builder
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreditDto {
