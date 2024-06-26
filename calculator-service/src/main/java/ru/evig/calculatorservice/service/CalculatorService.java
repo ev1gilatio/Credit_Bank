@@ -58,7 +58,6 @@ public class CalculatorService {
                 BigDecimal totalMonthlyPayment = calculateMonthlyPayment(totalRate, totalAmount, lsrDto.getTerm());
 
                 LoanOfferDto loDto = LoanOfferDto.builder()
-                        .statementId(UUID.randomUUID())
                         .requestedAmount(lsrDto.getAmount())
                         .totalAmount(totalAmount)
                         .term(lsrDto.getTerm())
@@ -80,7 +79,7 @@ public class CalculatorService {
         log.info("Output data from makeLoanOfferDtoList = " + list);
 
         return list.stream()
-                .sorted(compareByRate)
+                .sorted(compareByRate.reversed())
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
