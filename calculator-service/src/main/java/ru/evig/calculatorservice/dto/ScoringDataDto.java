@@ -7,6 +7,7 @@ import org.springframework.lang.Nullable;
 import ru.evig.calculatorservice.enums.Gender;
 import ru.evig.calculatorservice.enums.MaritalStatus;
 
+import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -44,7 +45,6 @@ public class ScoringDataDto {
     @Schema(example = "MALE")
     private Gender gender;
 
-    //гггг-мм-дд
     @NotNull
     @Past
     @Schema(example = "2000-01-01")
@@ -78,6 +78,8 @@ public class ScoringDataDto {
     @Schema(example = "0")
     private Integer dependentAmount;
 
+    @Valid
+    @NotNull
     private EmploymentDto employment;
 
     @NotNull

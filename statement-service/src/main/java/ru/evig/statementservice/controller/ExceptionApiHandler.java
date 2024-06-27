@@ -1,5 +1,6 @@
 package ru.evig.statementservice.controller;
 
+import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,18 +19,18 @@ import java.util.Map;
 @Slf4j
 public class ExceptionApiHandler {
 
-    @ExceptionHandler(TooYoungForCreditException.class)
-    private ResponseEntity<String> handleException(TooYoungForCreditException e, WebRequest r) {
+    @ExceptionHandler(RuntimeException.class)
+    private ResponseEntity<String> handleException(RuntimeException e, WebRequest r) {
         logging(e, r);
 
         return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(NullPointerException.class)
-    private ResponseEntity<String> handleException(NullPointerException e, WebRequest r) {
+    @ExceptionHandler(TooYoungForCreditException.class)
+    private ResponseEntity<String> handleException(TooYoungForCreditException e, WebRequest r) {
         logging(e, r);
 
-        return new ResponseEntity<>("Fields cannot be null", HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -51,6 +52,13 @@ public class ExceptionApiHandler {
         logging(e, r);
 
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(FeignException.class)
+    private ResponseEntity<String> handleException(FeignException e, WebRequest r) {
+        logging(e, r);
+
+        return new ResponseEntity<>("Error from another service: " + e.contentUTF8(), HttpStatus.BAD_REQUEST);
     }
 
     private void logging(Exception e, WebRequest r) {

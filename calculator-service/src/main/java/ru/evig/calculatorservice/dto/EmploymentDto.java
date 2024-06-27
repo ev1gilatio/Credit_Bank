@@ -7,6 +7,7 @@ import ru.evig.calculatorservice.enums.EmploymentPosition;
 import ru.evig.calculatorservice.enums.EmploymentStatus;
 
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import java.math.BigDecimal;
 
 @Data
@@ -18,7 +19,8 @@ public class EmploymentDto {
     private EmploymentStatus employmentStatus;
 
     @NotNull
-    @Schema(example = "INN")
+    @Pattern(regexp = "^[0-9]{10,12}$")
+    @Schema(example = "0123456789")
     private String employmentINN;
 
     @NotNull
