@@ -1,20 +1,20 @@
-package ru.evig.calculatorservice.dto;
+package ru.evig.statementservice.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 import org.springframework.lang.Nullable;
-import ru.evig.calculatorservice.enums.Gender;
-import ru.evig.calculatorservice.enums.MaritalStatus;
 
-import javax.validation.Valid;
-import javax.validation.constraints.*;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Past;
+import javax.validation.constraints.Pattern;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
 @Builder
-public class ScoringDataDto {
+public class LoanStatementRequestDto {
 
     @NotNull
     @Min(30000)
@@ -42,8 +42,9 @@ public class ScoringDataDto {
     private String middleName;
 
     @NotNull
-    @Schema(example = "MALE")
-    private Gender gender;
+    @Pattern(regexp = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$")
+    @Schema(example = "vov@vov.ru")
+    private String email;
 
     @NotNull
     @Past
@@ -59,39 +60,4 @@ public class ScoringDataDto {
     @Pattern(regexp = "^[0-9]{6}$")
     @Schema(example = "456789")
     private String passportNumber;
-
-    @NotNull
-    @Past
-    @Schema(example = "2020-01-01")
-    private LocalDate passportIssueDate;
-
-    @NotNull
-    @Pattern(regexp = "^[a-zA-Z ]{1,256}$")
-    @Schema(example = "NeoFlex SPb")
-    private String passportIssueBranch;
-
-    @NotNull
-    @Schema(example = "NOT_MARRIED")
-    private MaritalStatus maritalStatus;
-
-    @Nullable
-    @Schema(example = "0")
-    private Integer dependentAmount;
-
-    @Valid
-    @NotNull
-    private EmploymentDto employment;
-
-    @NotNull
-    @Pattern(regexp = "^[a-zA-Z0-9]{2,30}$")
-    @Schema(example = "AccNumber")
-    private String accountNumber;
-
-    @NotNull
-    @Schema(example = "false")
-    private Boolean isInsuranceEnabled;
-
-    @NotNull
-    @Schema(example = "false")
-    private Boolean isSalaryClient;
 }

@@ -10,6 +10,7 @@
     <modules>
         <module>calculator-service</module>
         <module>deal-service</module>
+        <module>statement-service</module>
     </modules>
 
     <parent>
@@ -31,6 +32,7 @@
         <swagger.version>2.2.8</swagger.version>
         <springdoc.version>1.6.14</springdoc.version>
         <springcloud.version>2021.0.8</springcloud.version>
+        <loadbalancer.version>4.1.2</loadbalancer.version>
     </properties>
 
     <dependencyManagement>
@@ -85,6 +87,17 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+            <version>${loadbalancer.version}</version>
         </dependency>
     </dependencies>
 

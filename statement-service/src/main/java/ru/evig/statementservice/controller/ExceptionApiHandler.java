@@ -1,5 +1,6 @@
-package ru.evig.calculatorservice.controller;
+package ru.evig.statementservice.controller;
 
+import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,8 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
-import ru.evig.calculatorservice.exception.LoanRejectedException;
-import ru.evig.calculatorservice.exception.TooYoungForCreditException;
+import ru.evig.statementservice.exception.TooYoungForCreditException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,13 +28,6 @@ public class ExceptionApiHandler {
 
     @ExceptionHandler(TooYoungForCreditException.class)
     private ResponseEntity<String> handleException(TooYoungForCreditException e, WebRequest r) {
-        logging(e, r);
-
-        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(LoanRejectedException.class)
-    private ResponseEntity<String> handleException(LoanRejectedException e, WebRequest r) {
         logging(e, r);
 
         return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -59,6 +52,13 @@ public class ExceptionApiHandler {
         logging(e, r);
 
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(FeignException.class)
+    private ResponseEntity<String> handleException(FeignException e, WebRequest r) {
+        logging(e, r);
+
+        return new ResponseEntity<>("Error from another service: " + e.contentUTF8(), HttpStatus.BAD_REQUEST);
     }
 
     private void logging(Exception e, WebRequest r) {
