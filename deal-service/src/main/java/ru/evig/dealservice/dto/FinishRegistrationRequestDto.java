@@ -7,6 +7,7 @@ import org.springframework.lang.Nullable;
 import ru.evig.dealservice.enums.Gender;
 import ru.evig.dealservice.enums.MaritalStatus;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Past;
 import javax.validation.constraints.Pattern;
@@ -38,6 +39,8 @@ public class FinishRegistrationRequestDto {
     @Schema(example = "NeoFlex SPb")
     private String passportIssueBranch;
 
+    @Valid
+    @NotNull
     private EmploymentDto employment;
 
     @NotNull

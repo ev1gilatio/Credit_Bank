@@ -27,20 +27,20 @@ public class CalculatorController {
             @ApiResponse(responseCode = "400", description = "Какие-то данные для прескоринга неудовлетворяют условиям")
     })
     @PostMapping("/offers")
-    private List<LoanOfferDto> makeLoanOfferList(@Valid @RequestBody LoanStatementRequestDto loanStatementRequestDto) {
+    private List<LoanOfferDto> makeLoanOfferList(@Valid @RequestBody LoanStatementRequestDto lsrDto) {
 
-        return service.getLoanOfferDtoList(loanStatementRequestDto);
+        return service.getLoanOfferDtoList(lsrDto);
     }
 
     @Operation(summary = "Скоринг и расчет всех кредитных параметров",
             description = "Производится скоринг на основе полученной scoringDataDto и расчет всех кредитных параметров")
-    @PostMapping("/calc")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Успешный скоринг"),
             @ApiResponse(responseCode = "400", description = "Какие-то данные для скоринга неудовлетворяют условиям")
     })
-    private CreditDto calculateCreditTerms(@Valid @RequestBody ScoringDataDto scoringDataDto) {
+    @PostMapping("/calc")
+    private CreditDto calculateCreditTerms(@Valid @RequestBody ScoringDataDto sdDto) {
 
-        return service.getCreditDto(scoringDataDto);
+        return service.getCreditDto(sdDto);
     }
 }

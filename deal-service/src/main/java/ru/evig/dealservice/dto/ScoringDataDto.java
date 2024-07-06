@@ -17,10 +17,7 @@ public class ScoringDataDto {
     private String lastName;
     private String middleName;
     private Gender gender;
-
-    //гггг-мм-дд
     private LocalDate birthday;
-
     private String passportSeries;
     private String passportNumber;
     private LocalDate passportIssueDate;

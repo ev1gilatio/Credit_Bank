@@ -112,7 +112,7 @@ public class CalculatorControllerTest {
     private ScoringDataDto getSdDto(String firstName) {
         EmploymentDto eDto = EmploymentDto.builder()
                 .employmentStatus(EmploymentStatus.EMPLOYEE)
-                .employmentINN("INN")
+                .employmentINN("0123456789")
                 .salary(new BigDecimal(100000))
                 .position(EmploymentPosition.SENIOR)
                 .workExperienceTotal(24)
