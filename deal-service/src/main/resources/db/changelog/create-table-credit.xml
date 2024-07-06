@@ -12,15 +12,42 @@
             <column name="credit_id" type="UUID">
                 <constraints primaryKey="true"/>
             </column>
-            <column name="amount" type="decimal"/>
-            <column name="term" type="integer"/>
-            <column name="monthly_payment" type="decimal"/>
-            <column name="rate" type="decimal"/>
-            <column name="psk" type="decimal"/>
-            <column name="payment_schedule" type="jsonb"/>
-            <column name="insurance_enabled" type="boolean"/>
-            <column name="salary_client" type="boolean"/>
-            <column name="credit_status" type="varchar(255)"/>
+
+            <column name="amount" type="decimal">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="term" type="integer">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="monthly_payment" type="decimal">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="rate" type="decimal">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="psk" type="decimal">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="payment_schedule" type="jsonb">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="insurance_enabled" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="salary_client" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="credit_status" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
 
         </createTable>
     </changeSet>

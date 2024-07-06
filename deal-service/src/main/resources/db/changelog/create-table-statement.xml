@@ -12,14 +12,30 @@
             <column name="statement_id" type="UUID">
                 <constraints primaryKey="true"/>
             </column>
-            <column name="client_id" type="uuid"/>
+
+            <column name="client_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+
             <column name="credit_id" type="uuid"/>
-            <column name="status" type="varchar(255)"/>
-            <column name="creation_date" type="timestamp"/>
+
+            <column name="status" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="creation_date" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+
             <column name="applied_offer" type="jsonb"/>
+
             <column name="sign_date" type="timestamp"/>
+
             <column name="ses_code" type="varchar(255)"/>
-            <column name="status_history" type="jsonb"/>
+
+            <column name="status_history" type="jsonb">
+                <constraints nullable="false"/>
+            </column>
 
         </createTable>
 
