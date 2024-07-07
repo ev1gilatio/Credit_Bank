@@ -11,6 +11,7 @@
         <module>calculator-service</module>
         <module>deal-service</module>
         <module>statement-service</module>
+        <module>dossier-service</module>
     </modules>
 
     <parent>
