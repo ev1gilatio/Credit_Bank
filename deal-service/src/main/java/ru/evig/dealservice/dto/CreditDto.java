@@ -1,14 +1,13 @@
 package ru.evig.dealservice.dto;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class CreditDto {
     private BigDecimal amount;
     private Integer term;

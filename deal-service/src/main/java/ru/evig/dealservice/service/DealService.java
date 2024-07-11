@@ -173,7 +173,7 @@ public class DealService {
         log.info("Saved statement to DB from createCredit = " + statement);
     }
 
-    private Statement findStatementInDB(UUID id) {
+    public Statement findStatementInDB(UUID id) {
         Statement statement;
         Optional<Statement> statementOptional = statementRepository.findById(id);
 
