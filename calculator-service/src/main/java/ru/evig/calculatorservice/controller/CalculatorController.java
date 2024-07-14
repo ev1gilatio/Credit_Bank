@@ -21,7 +21,8 @@ public class CalculatorController {
     private final CalculatorService service;
 
     @Operation(summary = "Прескоринг и список возможных предложений",
-            description = "Производится прексоринг на основе полученной loanStatementRequestDto и возвращается список из 4-х предложений")
+            description = "Производится прескоринг на основе полученной LoanStatementRequestDto, " +
+                    "возвращается список из 4-х предложений")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Успешный прескоринг"),
             @ApiResponse(responseCode = "400", description = "Какие-то данные для прескоринга неудовлетворяют условиям")
@@ -33,7 +34,8 @@ public class CalculatorController {
     }
 
     @Operation(summary = "Скоринг и расчет всех кредитных параметров",
-            description = "Производится скоринг на основе полученной scoringDataDto и расчет всех кредитных параметров")
+            description = "Производится скоринг на основе полученной ScoringDataDto, " +
+                    "рассчитываются все кредитные параметры")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Успешный скоринг"),
             @ApiResponse(responseCode = "400", description = "Какие-то данные для скоринга неудовлетворяют условиям")

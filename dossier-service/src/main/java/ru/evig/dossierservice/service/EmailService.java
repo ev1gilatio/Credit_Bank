@@ -20,8 +20,6 @@ public class EmailService {
     }
 
     public void sendEmail(EmailDetails details) {
-        log.info("Input data for sendEMail = " + details);
-
         try {
             SimpleMailMessage message = new SimpleMailMessage();
 

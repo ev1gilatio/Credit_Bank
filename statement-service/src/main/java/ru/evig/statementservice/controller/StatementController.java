@@ -24,7 +24,8 @@ public class StatementController {
     private final StatementService service;
 
     @Operation(summary = "Прескоринг и список возможных предложений",
-            description = "Производится прексоринг на основе полученной loanStatementRequestDto и возвращается список из 4-х предложений")
+            description = "Производится прескоринг на основе полученной LoanStatementRequestDto, " +
+                    "возвращается список из 4-х предложений")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Успешный прескоринг"),
             @ApiResponse(responseCode = "400", description = "Какие-то данные для прескоринга неудовлетворяют условиям")
@@ -37,9 +38,10 @@ public class StatementController {
     }
 
     @Operation(summary = "Выбор определенного предложения",
-            description = "Выбранное предложение отправляется в deal-service")
+            description = "Клиент выбирает одно из предложений, " +
+                    "преложение отправляется в deal-service")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Успешное отправление"),
+            @ApiResponse(responseCode = "200", description = "Все данные выбранного LoanOfferDto верны"),
             @ApiResponse(responseCode = "400", description = "Какие-то данные в LoanOfferDto неверны")
     })
     @PostMapping("/offer")

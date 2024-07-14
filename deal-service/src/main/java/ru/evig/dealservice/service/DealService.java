@@ -10,6 +10,7 @@ import ru.evig.dealservice.entity.Statement;
 import ru.evig.dealservice.enums.ApplicationStatus;
 import ru.evig.dealservice.enums.ChangeType;
 import ru.evig.dealservice.enums.CreditStatus;
+import ru.evig.dealservice.exception.StatementDeniedException;
 import ru.evig.dealservice.mapper.ClientMapper;
 import ru.evig.dealservice.mapper.CreditMapper;
 import ru.evig.dealservice.repository.ClientRepository;
@@ -17,11 +18,10 @@ import ru.evig.dealservice.repository.CreditRepository;
 import ru.evig.dealservice.repository.StatementRepository;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -57,8 +57,8 @@ public class DealService {
         Statement statement = Statement.builder()
                 .id(UUID.randomUUID())
                 .clientId(client)
-                .status(ApplicationStatus.PREAPPROVAL)
                 .statusHistory(new ArrayList<>())
+                .status(ApplicationStatus.PREAPPROVAL)
                 .build();
 
         statementRepository.save(statement);
@@ -87,14 +87,23 @@ public class DealService {
 
         Statement.StatementBuilder statementToBuilder = statement.toBuilder();
         statement = statementToBuilder
-                .status(ApplicationStatus.APPROVED)
                 .statusHistory(getChangedStatementStatus(statement))
+                .status(ApplicationStatus.APPROVED)
                 .appliedOffer(loDto)
                 .build();
 
         statementRepository.save(statement);
 
         log.info("Saved data to DB from selectLoanOffer = " + statement);
+    }
+
+    public void checkDeniedStatus(String statementId) {
+        Statement statement = findStatementInDB(UUID.fromString(statementId));
+
+        if (statement.getStatus().equals(ApplicationStatus.CLIENT_DENIED)) {
+            throw new StatementDeniedException("Statement with ID " + statementId +
+                    " cannot be processed further");
+        }
     }
 
     public ScoringDataDto getScoringDataDto(FinishRegistrationRequestDto frrDto, String statementId) {
@@ -162,7 +171,6 @@ public class DealService {
 
         Statement.StatementBuilder statementToBuilder = statement.toBuilder();
         statement = statementToBuilder
-                .statusHistory(getChangedStatementStatus(statement))
                 .creditId(credit)
                 .build();
 
@@ -186,6 +194,18 @@ public class DealService {
         return statement;
     }
 
+    public void changeStatementStatus(String statementId, ApplicationStatus status) {
+        Statement statement = findStatementInDB(UUID.fromString(statementId));
+
+        Statement.StatementBuilder statementToBuilder = statement.toBuilder();
+        statement = statementToBuilder
+                .statusHistory(getChangedStatementStatus(statement))
+                .status(status)
+                .build();
+
+        statementRepository.save(statement);
+    }
+
     private List<StatementStatusHistoryDto> getChangedStatementStatus(Statement statement) {
         StatementStatusHistoryDto sshDto = StatementStatusHistoryDto.builder()
                 .status(statement.getStatus())
@@ -197,5 +217,85 @@ public class DealService {
         list.add(sshDto);
 
         return list;
+    }
+
+    public String createDocumentation(String statementId) {
+        UUID id = UUID.fromString(statementId);
+        Statement statement = findStatementInDB(id);
+        Client client = statement.getClientId();
+        Credit credit = statement.getCreditId();
+
+        String theme = "Кредитная документация";
+        String clientStatementId = "ID вашей заявки: " + statementId;
+        String lastName = client.getLastName();
+        String firstName = client.getFirstName();
+        String middleName = client.getMiddleName();
+        String fio = String.format("%s %s %s", lastName, firstName, middleName);
+        LocalDate birthDate = client.getBirthDate();
+        String birth = birthDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+        String email = client.getEmail();
+        PassportDto pDto = client.getPassport();
+        String passport = String.format("%s %s", pDto.getSeries(), pDto.getNumber());
+        String subTheme = "Кредитные условия";
+        String amount = credit.getAmount().toString();
+        String term = credit.getTerm().toString();
+        String monthlyPayment = credit.getMonthlyPayment().toString();
+        String rate = credit.getRate().toString();
+        String psk = credit.getPsk().toString();
+        boolean insurance = credit.isInsuranceEnabled();
+        boolean salaryClient = credit.isSalaryClient();
+
+        return theme + "\n\n" +
+                clientStatementId + "\n" +
+                fio + "\n" +
+                birth + "\n" +
+                email + "\n" +
+                "Паспорт: " + passport + "\n\n" +
+                subTheme + "\n\n" +
+                "Размер: " + amount + "\n" +
+                "Срок: " + term + "\n" +
+                "Месячный платеж: " + monthlyPayment + "\n" +
+                "Ставка: " + rate + "\n" +
+                "ПСК: " + psk + "\n" +
+                "Страховка: " + insurance + "\n" +
+                "Зарплатный клиент: " + salaryClient;
+    }
+
+    public String generateSesCode(String statementId) {
+        String firstPart = statementId.split("-")[0].replace("-", "");
+        String secondPart = String.format("%d%d%d",
+                LocalDate.now().getDayOfMonth(),
+                LocalDate.now().getMonthValue(),
+                LocalDate.now().getYear()
+        );
+        Random r = new Random();
+        int x = r.nextInt(100) + 1;
+        String thirdPart = String.valueOf(x);
+
+        String sesCode = firstPart + secondPart + thirdPart;
+
+        Statement statement = findStatementInDB(UUID.fromString(statementId));
+        statement.setSesCode(sesCode);
+        statementRepository.save(statement);
+
+        log.info("Generated SES-code from generateSesCode = " + sesCode);
+
+        return sesCode;
+    }
+
+    public void signDocuments(String statementId) {
+        Statement statement = findStatementInDB(UUID.fromString(statementId));
+        statement.setSignDate(LocalDateTime.now());
+        Statement saved = statementRepository.save(statement);
+
+        log.info("Saved data to DB from signDocuments = " + saved);
+    }
+
+    public void changeCreditStatus(String statementId) {
+        Statement statement = findStatementInDB(UUID.fromString(statementId));
+        Credit credit = statement.getCreditId();
+        credit.setCreditStatus(CreditStatus.ISSUED);
+
+        creditRepository.save(credit);
     }
 }

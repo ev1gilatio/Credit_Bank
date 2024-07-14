@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import ru.evig.dealservice.exception.StatementDeniedException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,6 +52,13 @@ public class ExceptionApiHandler {
         logging(e, r);
 
         return new ResponseEntity<>("Error from another service: " + e.contentUTF8(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(StatementDeniedException.class)
+    private ResponseEntity<String> handleException(StatementDeniedException e, WebRequest r) {
+        logging(e, r);
+
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     private void logging(Exception e, WebRequest r) {
