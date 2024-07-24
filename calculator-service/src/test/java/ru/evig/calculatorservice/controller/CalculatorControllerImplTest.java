@@ -24,8 +24,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CalculatorController.class)
-public class CalculatorControllerTest {
+@WebMvcTest(CalculatorControllerImpl.class)
+public class CalculatorControllerImplTest {
 
     @Autowired
     private ObjectMapper mapper;

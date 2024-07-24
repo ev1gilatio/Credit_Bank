@@ -45,9 +45,7 @@
                 <constraints nullable="false"/>
             </column>
 
-            <column name="credit_status" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
+            <column name="credit_status" type="varchar(255)"/>
 
         </createTable>
     </changeSet>

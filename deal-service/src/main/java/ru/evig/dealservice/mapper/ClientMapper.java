@@ -6,6 +6,7 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.Mappings;
 import ru.evig.dealservice.dto.FinishRegistrationRequestDto;
 import ru.evig.dealservice.dto.LoanStatementRequestDto;
+import ru.evig.dealservice.dto.PassportDto;
 import ru.evig.dealservice.entity.Client;
 
 @Mapper(componentModel = "spring")
@@ -26,4 +27,6 @@ public interface ClientMapper {
 
     @Mapping(target = "passport", ignore = true)
     Client finishRegistrationDtoToEntity(@MappingTarget Client oldClient, FinishRegistrationRequestDto frrDto);
+    Client passportDtoToEntity(@MappingTarget Client oldClient, PassportDto passport);
+
 }
