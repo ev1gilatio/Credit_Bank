@@ -1,4 +1,4 @@
-package ru.evig.dossierservice.entity;
+package ru.evig.dossierservice.dto;
 
 import lombok.Data;
 

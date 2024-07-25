@@ -12,6 +12,7 @@
         <module>deal-service</module>
         <module>statement-service</module>
         <module>dossier-service</module>
+        <module>gateway-service</module>
     </modules>
 
     <parent>

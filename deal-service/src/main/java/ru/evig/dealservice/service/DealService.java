@@ -175,6 +175,11 @@ public class DealService {
         return statement;
     }
 
+    public List<Statement> findAllStatementsInDB() {
+
+        return statementRepository.findAll();
+    }
+
     private List<StatementStatusHistoryDto> getChangedStatementStatus(Statement statement) {
         StatementStatusHistoryDto sshDto = StatementStatusHistoryDto.builder()
                 .status(statement.getStatus())
