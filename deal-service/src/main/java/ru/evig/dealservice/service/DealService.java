@@ -1,8 +1,10 @@
 package ru.evig.dealservice.service;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.evig.dealservice.DealClient;
 import ru.evig.dealservice.dto.*;
 import ru.evig.dealservice.entity.Client;
 import ru.evig.dealservice.entity.Credit;
@@ -40,10 +42,24 @@ public class DealService {
     private final ScoringDataMapper sdMapper;
 
     private final KafkaService kafka;
+    private final DealClient dealClient;
+
+    public List<LoanOfferDto> getLoanOfferDtoList(LoanStatementRequestDto lsrDto) {
+        log.info("Input data for getLoanOfferDtoList = " + lsrDto);
+
+        List<LoanOfferDto> dealClientResponseList = dealClient.getLoanOfferDtoList(lsrDto);
+
+        Client client = createClient(lsrDto);
+        Statement statement = createStatement(client);
+
+        for (LoanOfferDto loDto : dealClientResponseList) {
+            loDto.setStatementId(statement.getId());
+        }
+
+        return dealClientResponseList;
+    }
 
     public Client createClient(LoanStatementRequestDto lsrDto) {
-        log.info("Input data for createClient = " + lsrDto);
-
         PassportDto passport = passportMapper.lsrDtoToPassportDto(lsrDto);
         Client client = clientMapper.loanStatementRequestDtoToEntity(lsrDto);
         client = clientMapper.passportDtoToEntity(client, passport);
@@ -51,6 +67,8 @@ public class DealService {
         clientRepository.save(client);
 
         log.info("Saved data to DB from createClient = " + client);
+
+        createStatement(client);
 
         return client;
     }
@@ -67,16 +85,6 @@ public class DealService {
         log.info("Saved data to DB from createStatement = " + statement);
 
         return statement;
-    }
-
-    public List<LoanOfferDto> getLoanOfferDtoList(List<LoanOfferDto> list, UUID id) {
-        log.info("Input data for getLoanOfferDtoList = " + list + " " + id);
-
-        for (LoanOfferDto loDto : list) {
-            loDto.setStatementId(id);
-        }
-
-        return list;
     }
 
     public void selectLoanOffer(LoanOfferDto loDto) {
@@ -99,6 +107,43 @@ public class DealService {
         sendMessageToTopic(loDto.getStatementId().toString(),
                 EmailTheme.FINISH_REGISTRATION,
                 "finish-registration"
+        );
+    }
+
+    public void createCredit(FinishRegistrationRequestDto frrDto, String statementId) {
+        CreditDto dealClientCreditDto;
+        ScoringDataDto sdDto = getScoringDataDto(frrDto, statementId);
+
+        try {
+            dealClientCreditDto = dealClient.getCreditDto(sdDto);
+        } catch (FeignException.BadRequest e) {
+            changeStatementStatus(statementId, ApplicationStatus.CC_DENIED);
+
+            throw e;
+        }
+
+        completeBuildingClient(frrDto, statementId);
+
+        Credit credit = creditMapper.dtoToEntity(dealClientCreditDto);
+        credit = creditMapper.statusToEntity(credit, CreditStatus.CALCULATED);
+
+        Statement statement = findStatementInDB(UUID.fromString(statementId));
+        Statement.StatementBuilder statementToBuilder = statement.toBuilder();
+        statement = statementToBuilder
+                .creditId(credit)
+                .statusHistory(getChangedStatementStatus(statement))
+                .status(ApplicationStatus.CC_APPROVED)
+                .build();
+
+        creditRepository.save(credit);
+        statementRepository.save(statement);
+
+        log.info("Saved credit to DB from createCredit = " + credit);
+        log.info("Saved statement to DB from createCredit = " + statement);
+
+        sendMessageToTopic(statementId,
+                EmailTheme.SEND_DOCUMENTS,
+                "send-documents"
         );
     }
 
@@ -132,34 +177,6 @@ public class DealService {
         statementRepository.save(statement);
 
         log.info("Saved data to DB from completeBuildingClient = " + statement);
-    }
-
-    public void createCredit(CreditDto cDto, FinishRegistrationRequestDto frrDto, String statementId) {
-        log.info("Input data for createCredit = " + cDto + " " + frrDto + " " + statementId);
-
-        completeBuildingClient(frrDto, statementId);
-
-        Credit credit = creditMapper.dtoToEntity(cDto);
-        credit = creditMapper.statusToEntity(credit, CreditStatus.CALCULATED);
-
-        Statement statement = findStatementInDB(UUID.fromString(statementId));
-        Statement.StatementBuilder statementToBuilder = statement.toBuilder();
-        statement = statementToBuilder
-                .creditId(credit)
-                .build();
-
-        creditRepository.save(credit);
-        statementRepository.save(statement);
-
-        changeStatementStatus(statementId, ApplicationStatus.CC_APPROVED);
-
-        log.info("Saved credit to DB from createCredit = " + credit);
-        log.info("Saved statement to DB from createCredit = " + statement);
-
-        sendMessageToTopic(statementId,
-                EmailTheme.SEND_DOCUMENTS,
-                "send-documents"
-        );
     }
 
     public Statement findStatementInDB(UUID id) {

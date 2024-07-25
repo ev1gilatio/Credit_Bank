@@ -1,13 +1,10 @@
 package ru.evig.dealservice.controller;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.evig.dealservice.DealClient;
 import ru.evig.dealservice.dto.*;
-import ru.evig.dealservice.entity.Client;
 import ru.evig.dealservice.entity.Statement;
-import ru.evig.dealservice.enums.ApplicationStatus;
 import ru.evig.dealservice.service.DealService;
 
 import javax.validation.Valid;
@@ -18,17 +15,13 @@ import java.util.UUID;
 @RequestMapping("/deal")
 @RequiredArgsConstructor
 public class DealControllerImpl implements DealController {
-    private final DealClient dealClient;
     private final DealService service;
 
     @Override
     @PostMapping("/statement")
     public List<LoanOfferDto> getLoanOfferList(@Valid @RequestBody LoanStatementRequestDto lsrDto) {
-        List<LoanOfferDto> dealClientResponseList = dealClient.getLoanOfferDtoList(lsrDto);
-        Client client = service.createClient(lsrDto);
-        Statement statement = service.createStatement(client);
 
-        return service.getLoanOfferDtoList(dealClientResponseList, statement.getId());
+        return service.getLoanOfferDtoList(lsrDto);
     }
 
     @Override
@@ -40,17 +33,8 @@ public class DealControllerImpl implements DealController {
     @Override
     @PostMapping("/calculate/{statementId}")
     public void createCredit(@Valid @RequestBody FinishRegistrationRequestDto frrDto,
-                              @PathVariable String statementId) {
-        ScoringDataDto sdDto = service.getScoringDataDto(frrDto, statementId);
-
-        try {
-            CreditDto dealClientCreditDto = dealClient.getCreditDto(sdDto);
-            service.createCredit(dealClientCreditDto, frrDto, statementId);
-        } catch (FeignException.BadRequest e) {
-            service.changeStatementStatus(statementId, ApplicationStatus.CC_DENIED);
-
-            throw e;
-        }
+                             @PathVariable String statementId) {
+        service.createCredit(frrDto, statementId);
     }
 
     @Override
