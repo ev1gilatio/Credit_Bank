@@ -11,6 +11,7 @@
         <module>calculator-service</module>
         <module>deal-service</module>
         <module>statement-service</module>
+        <module>dossier-service</module>
     </modules>
 
     <parent>
@@ -98,6 +99,11 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-loadbalancer</artifactId>
             <version>${loadbalancer.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
         </dependency>
     </dependencies>
 

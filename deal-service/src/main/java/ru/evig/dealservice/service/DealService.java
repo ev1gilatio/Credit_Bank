@@ -1,8 +1,10 @@
 package ru.evig.dealservice.service;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.evig.dealservice.DealClient;
 import ru.evig.dealservice.dto.*;
 import ru.evig.dealservice.entity.Client;
 import ru.evig.dealservice.entity.Credit;
@@ -10,18 +12,21 @@ import ru.evig.dealservice.entity.Statement;
 import ru.evig.dealservice.enums.ApplicationStatus;
 import ru.evig.dealservice.enums.ChangeType;
 import ru.evig.dealservice.enums.CreditStatus;
+import ru.evig.dealservice.enums.EmailTheme;
+import ru.evig.dealservice.exception.StatementDeniedException;
+import ru.evig.dealservice.exception.StatementIssuedException;
 import ru.evig.dealservice.mapper.ClientMapper;
 import ru.evig.dealservice.mapper.CreditMapper;
+import ru.evig.dealservice.mapper.PassportMapper;
+import ru.evig.dealservice.mapper.ScoringDataMapper;
 import ru.evig.dealservice.repository.ClientRepository;
 import ru.evig.dealservice.repository.CreditRepository;
 import ru.evig.dealservice.repository.StatementRepository;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -33,32 +38,46 @@ public class DealService {
 
     private final ClientMapper clientMapper;
     private final CreditMapper creditMapper;
+    private final PassportMapper passportMapper;
+    private final ScoringDataMapper sdMapper;
+
+    private final KafkaService kafka;
+    private final DealClient dealClient;
+
+    public List<LoanOfferDto> getLoanOfferDtoList(LoanStatementRequestDto lsrDto) {
+        log.info("Input data for getLoanOfferDtoList = " + lsrDto);
+
+        List<LoanOfferDto> dealClientResponseList = dealClient.getLoanOfferDtoList(lsrDto);
+
+        Client client = createClient(lsrDto);
+        Statement statement = createStatement(client);
+
+        for (LoanOfferDto loDto : dealClientResponseList) {
+            loDto.setStatementId(statement.getId());
+        }
+
+        return dealClientResponseList;
+    }
 
     public Client createClient(LoanStatementRequestDto lsrDto) {
-        log.info("Input data for createClient = " + lsrDto);
-
-        PassportDto passport = PassportDto.builder()
-                .passportUUID(UUID.randomUUID())
-                .series(lsrDto.getPassportSeries())
-                .number(lsrDto.getPassportNumber())
-                .build();
-
+        PassportDto passport = passportMapper.lsrDtoToPassportDto(lsrDto);
         Client client = clientMapper.loanStatementRequestDtoToEntity(lsrDto);
-        client.setPassport(passport);
+        client = clientMapper.passportDtoToEntity(client, passport);
 
         clientRepository.save(client);
 
         log.info("Saved data to DB from createClient = " + client);
+
+        createStatement(client);
 
         return client;
     }
 
     public Statement createStatement(Client client) {
         Statement statement = Statement.builder()
-                .id(UUID.randomUUID())
                 .clientId(client)
-                .status(ApplicationStatus.PREAPPROVAL)
                 .statusHistory(new ArrayList<>())
+                .status(ApplicationStatus.PREAPPROVAL)
                 .build();
 
         statementRepository.save(statement);
@@ -68,59 +87,71 @@ public class DealService {
         return statement;
     }
 
-    public List<LoanOfferDto> getLoanOfferDtoList(List<LoanOfferDto> list, UUID id) {
-        log.info("Input data for getLoanOfferDtoList = " + list);
-
-        for (LoanOfferDto loDto : list) {
-            loDto.setStatementId(id);
-        }
-
-        log.info("Output data from getLoanOfferDtoList = " + list);
-
-        return list;
-    }
-
     public void selectLoanOffer(LoanOfferDto loDto) {
+        checkDeniedStatus(loDto.getStatementId().toString());
+
         log.info("Input data for selectLoanOffer = " + loDto);
 
         Statement statement = findStatementInDB(loDto.getStatementId());
-
         Statement.StatementBuilder statementToBuilder = statement.toBuilder();
         statement = statementToBuilder
-                .status(ApplicationStatus.APPROVED)
                 .statusHistory(getChangedStatementStatus(statement))
+                .status(ApplicationStatus.APPROVED)
                 .appliedOffer(loDto)
                 .build();
 
         statementRepository.save(statement);
 
         log.info("Saved data to DB from selectLoanOffer = " + statement);
+
+        sendMessageToTopic(loDto.getStatementId().toString(),
+                EmailTheme.FINISH_REGISTRATION,
+                "finish-registration"
+        );
+    }
+
+    public void createCredit(FinishRegistrationRequestDto frrDto, String statementId) {
+        CreditDto dealClientCreditDto;
+        ScoringDataDto sdDto = getScoringDataDto(frrDto, statementId);
+
+        try {
+            dealClientCreditDto = dealClient.getCreditDto(sdDto);
+        } catch (FeignException.BadRequest e) {
+            changeStatementStatus(statementId, ApplicationStatus.CC_DENIED);
+
+            throw e;
+        }
+
+        completeBuildingClient(frrDto, statementId);
+
+        Credit credit = creditMapper.dtoToEntity(dealClientCreditDto);
+        credit = creditMapper.statusToEntity(credit, CreditStatus.CALCULATED);
+
+        Statement statement = findStatementInDB(UUID.fromString(statementId));
+        Statement.StatementBuilder statementToBuilder = statement.toBuilder();
+        statement = statementToBuilder
+                .creditId(credit)
+                .statusHistory(getChangedStatementStatus(statement))
+                .status(ApplicationStatus.CC_APPROVED)
+                .build();
+
+        creditRepository.save(credit);
+        statementRepository.save(statement);
+
+        log.info("Saved credit to DB from createCredit = " + credit);
+        log.info("Saved statement to DB from createCredit = " + statement);
+
+        sendMessageToTopic(statementId,
+                EmailTheme.SEND_DOCUMENTS,
+                "send-documents"
+        );
     }
 
     public ScoringDataDto getScoringDataDto(FinishRegistrationRequestDto frrDto, String statementId) {
         log.info("Input data for getScoringDto = " + frrDto + " and " + statementId);
 
         Statement statement = findStatementInDB(UUID.fromString(statementId));
-
-        ScoringDataDto sdDto = ScoringDataDto.builder()
-                .amount(statement.getAppliedOffer().getTotalAmount())
-                .term(statement.getAppliedOffer().getTerm())
-                .firstName(statement.getClientId().getFirstName())
-                .lastName(statement.getClientId().getLastName())
-                .middleName(statement.getClientId().getMiddleName())
-                .gender(frrDto.getGender())
-                .birthday(statement.getClientId().getBirthDate())
-                .passportSeries(statement.getClientId().getPassport().getSeries())
-                .passportNumber(statement.getClientId().getPassport().getNumber())
-                .passportIssueDate(frrDto.getPassportIssueDate())
-                .passportIssueBranch(frrDto.getPassportIssueBranch())
-                .maritalStatus(frrDto.getMaritalStatus())
-                .dependentAmount(frrDto.getDependentAmount())
-                .employment(frrDto.getEmployment())
-                .accountNumber(frrDto.getAccountNumber())
-                .isInsuranceEnabled(statement.getAppliedOffer().getIsInsuranceEnable())
-                .isSalaryClient(statement.getAppliedOffer().getIsSalaryClient())
-                .build();
+        ScoringDataDto sdDto = sdMapper.frrDtoToSdDto(frrDto, statement);
 
         log.info("Output data from getScoringDataDto = " + sdDto);
 
@@ -129,51 +160,26 @@ public class DealService {
 
     public void completeBuildingClient(FinishRegistrationRequestDto frrDto, String statementId) {
         Statement statement = findStatementInDB(UUID.fromString(statementId));
+
         PassportDto passport = statement.getClientId().getPassport();
+        passport = passportMapper.frrDtoToPassportDto(frrDto, passport);
 
-        PassportDto.PassportDtoBuilder passportToBuilder = passport.toBuilder();
-        passport = passportToBuilder
-                .issueDate(frrDto.getPassportIssueDate())
-                .issueBranch(frrDto.getPassportIssueBranch())
-                .build();
-
-        Client oldClient = statement.getClientId();
-        Client updatedClient = clientMapper.finishRegistrationDtoToEntity(oldClient, frrDto);
-        updatedClient.setPassport(passport);
+        Client client = statement.getClientId();
+        client = clientMapper.finishRegistrationDtoToEntity(client, frrDto);
+        client = clientMapper.passportDtoToEntity(client, passport);
 
         Statement.StatementBuilder statementToBuilder = statement.toBuilder();
         statement = statementToBuilder
-                .clientId(updatedClient)
+                .clientId(client)
                 .build();
 
-        clientRepository.save(updatedClient);
+        clientRepository.save(client);
         statementRepository.save(statement);
 
         log.info("Saved data to DB from completeBuildingClient = " + statement);
     }
 
-    public void createCredit(CreditDto cDto, String statementId) {
-        log.info("Input data for createCredit = " + cDto + " " + statementId);
-
-        Credit credit = creditMapper.dtoToEntity(cDto);
-        credit.setCreditStatus(CreditStatus.CALCULATED);
-
-        Statement statement = findStatementInDB(UUID.fromString(statementId));
-
-        Statement.StatementBuilder statementToBuilder = statement.toBuilder();
-        statement = statementToBuilder
-                .statusHistory(getChangedStatementStatus(statement))
-                .creditId(credit)
-                .build();
-
-        creditRepository.save(credit);
-        statementRepository.save(statement);
-
-        log.info("Saved credit to DB from createCredit = " + credit);
-        log.info("Saved statement to DB from createCredit = " + statement);
-    }
-
-    private Statement findStatementInDB(UUID id) {
+    public Statement findStatementInDB(UUID id) {
         Statement statement;
         Optional<Statement> statementOptional = statementRepository.findById(id);
 
@@ -197,5 +203,134 @@ public class DealService {
         list.add(sshDto);
 
         return list;
+    }
+
+    public String generateSesCode(String statementId) {
+        String firstPart = statementId.split("-")[0].replace("-", "");
+        String secondPart = String.format("%d%d%d",
+                LocalDate.now().getDayOfMonth(),
+                LocalDate.now().getMonthValue(),
+                LocalDate.now().getYear()
+        );
+        Random r = new Random();
+        int x = r.nextInt(100) + 1;
+        String thirdPart = String.valueOf(x);
+
+        String sesCode = firstPart + secondPart + thirdPart;
+
+        Statement statement = findStatementInDB(UUID.fromString(statementId));
+        statement.setSesCode(sesCode);
+
+        statementRepository.save(statement);
+
+        log.info("Generated SES-code from generateSesCode = " + sesCode);
+
+        return sesCode;
+    }
+
+    public void documentPerforming(String statementId) {
+        changeStatementStatus(statementId, ApplicationStatus.PREPARE_DOCUMENTS);
+
+        sendMessageToTopic(statementId,
+                EmailTheme.CREATE_DOCUMENTS,
+                "create-documents"
+        );
+
+        changeStatementStatus(statementId, ApplicationStatus.DOCUMENT_CREATED);
+    }
+
+    public void sesCodePerforming(String statementId) {
+        checkDeniedStatus(statementId);
+        generateSesCode(statementId);
+
+        sendMessageToTopic(statementId,
+                EmailTheme.SEND_SES,
+                "send-ses"
+        );
+    }
+
+    public void finishOperation(String statementId) {
+        changeStatementStatus(statementId, ApplicationStatus.DOCUMENT_SIGNED);
+        signDocuments(statementId);
+        changeStatementStatus(statementId, ApplicationStatus.CREDIT_ISSUED);
+        creditStatusIssued(statementId);
+
+        sendMessageToTopic(statementId,
+                EmailTheme.CREDIT_ISSUED,
+                "credit-issued"
+        );
+    }
+
+    public void denialPerforming(String statementId) {
+        checkDeniedStatus(statementId);
+        checkIssuedStatus(statementId);
+
+        changeStatementStatus(statementId, ApplicationStatus.CLIENT_DENIED);
+
+        sendMessageToTopic(statementId,
+                EmailTheme.STATEMENT_DENIED,
+                "statement-denied"
+        );
+    }
+
+    public void signDocuments(String statementId) {
+        Statement statement = findStatementInDB(UUID.fromString(statementId));
+        statement.setSignDate(LocalDateTime.now());
+
+        Statement saved = statementRepository.save(statement);
+
+        log.info("Saved data to DB from signDocuments = " + saved);
+    }
+
+    public void creditStatusIssued(String statementId) {
+        Statement statement = findStatementInDB(UUID.fromString(statementId));
+
+        Credit credit = statement.getCreditId();
+        credit = creditMapper.statusToEntity(credit, CreditStatus.ISSUED);
+
+        creditRepository.save(credit);
+    }
+
+    public void checkDeniedStatus(String statementId) {
+        Statement statement = findStatementInDB(UUID.fromString(statementId));
+
+        if (statement.getStatus().equals(ApplicationStatus.CLIENT_DENIED)) {
+            throw new StatementDeniedException("Statement with ID " + statementId +
+                    " cannot be processed further");
+        }
+    }
+
+    public void checkIssuedStatus(String statementId) {
+        Statement statement = findStatementInDB(UUID.fromString(statementId));
+
+        if (statement.getStatus().equals(ApplicationStatus.CREDIT_ISSUED)) {
+            throw new StatementIssuedException("Statement with ID " + statementId +
+                    " already issued");
+        }
+    }
+
+    public void changeStatementStatus(String statementId, ApplicationStatus status) {
+        Statement statement = findStatementInDB(UUID.fromString(statementId));
+
+        Statement.StatementBuilder statementToBuilder = statement.toBuilder();
+        statement = statementToBuilder
+                .statusHistory(getChangedStatementStatus(statement))
+                .status(status)
+                .build();
+
+        statementRepository.save(statement);
+    }
+
+    public void sendMessageToTopic(String statementId, EmailTheme theme, String topic) {
+        UUID id = UUID.fromString(statementId);
+        Statement statement = findStatementInDB(id);
+
+        EmailMessage message = EmailMessage.builder()
+                .address(statement.getClientId().getEmail())
+                .theme(theme)
+                .statementId(id)
+                .build();
+
+        kafka.sendMessageToTopic(topic, message);
     }
 }

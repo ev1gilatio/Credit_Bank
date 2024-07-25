@@ -1,4 +1,4 @@
-package ru.evig.dealservice.controller;
+package ru.evig.statementservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -7,26 +7,22 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.evig.dealservice.DealClient;
-import ru.evig.dealservice.dto.*;
-import ru.evig.dealservice.entity.Client;
-import ru.evig.dealservice.entity.Statement;
-import ru.evig.dealservice.enums.*;
-import ru.evig.dealservice.service.DealService;
+import ru.evig.statementservice.StatementClient;
+import ru.evig.statementservice.dto.LoanOfferDto;
+import ru.evig.statementservice.dto.LoanStatementRequestDto;
+import ru.evig.statementservice.service.StatementService;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.UUID;
 
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(DealController.class)
-public class DealControllerTest {
+@WebMvcTest(StatementControllerImpl.class)
+public class StatementControllerImplTest {
 
     @Autowired
     private ObjectMapper mapper;
@@ -35,39 +31,31 @@ public class DealControllerTest {
     private MockMvc mvc;
 
     @MockBean
-    private DealClient dealClient;
+    private StatementClient statementClient;
 
     @MockBean
-    private DealService service;
+    private StatementService service;
 
     @Test
     void shouldReturnLoanOfferDtoList() throws Exception {
-        when(service.createClient(getLsrDto(30000)))
-                .thenReturn(createClient(getLsrDto(30000)));
-
-        Client client = service.createClient(getLsrDto(30000));
-
-        when(service.createStatement(client))
-                .thenReturn(createStatement(client));
-
-        String json = mapper.writeValueAsString(getLsrDto(30000));
-        performOkRequest(json, "/deal/statement");
+        String json = mapper.writeValueAsString(getLsrDto(30000, 2002));
+        performOkRequest(json, "/statement");
     }
 
     @Test
     void shouldReturnHttpMessageNotReadableExceptionInsteadOfLoanOfferDtoList() throws Exception {
         String json = mapper.writeValueAsString(null);
         performBadRequest(json,
-                "/deal/statement",
+                "/statement",
                 "Invalid JSON payload"
         );
     }
 
     @Test
     void shouldReturnMethodArgumentNotValidExceptionInsteadOfLoanOfferDtoList() throws Exception {
-        String json = mapper.writeValueAsString(getLsrDto(3000));
+        String json = mapper.writeValueAsString(getLsrDto(3000, 2002));
         performBadRequest(json,
-                "/deal/statement",
+                "/statement",
                 "{\"amount\":\"must be greater than or equal to 30000\"}"
         );
     }
@@ -75,14 +63,14 @@ public class DealControllerTest {
     @Test
     void shouldSelectLoanOffer() throws Exception {
         String json = mapper.writeValueAsString(getLoDto(6));
-        performOkRequest(json, "/deal/offer/select");
+        performOkRequest(json, "/statement/offer");
     }
 
     @Test
     void shouldReturnHttpMessageNotReadableException() throws Exception {
         String json = mapper.writeValueAsString(null);
         performBadRequest(json,
-                "/deal/offer/select",
+                "/statement/offer",
                 "Invalid JSON payload"
         );
     }
@@ -91,7 +79,7 @@ public class DealControllerTest {
     void shouldReturnMethodArgumentNotValidException() throws Exception {
         String json = mapper.writeValueAsString(getLoDto(-1));
         performBadRequest(json,
-                "/deal/offer/select",
+                "/statement/offer",
                 "{\"term\":\"must be greater than or equal to 6\"}"
         );
     }
@@ -113,34 +101,7 @@ public class DealControllerTest {
                 .andExpect(content().string(expectedResponse));
     }
 
-    private Client createClient(LoanStatementRequestDto lsrDto) {
-        PassportDto passport = PassportDto.builder()
-                .passportUUID(UUID.randomUUID())
-                .series(lsrDto.getPassportSeries())
-                .number(lsrDto.getPassportNumber())
-                .build();
-
-        return Client.builder()
-                .id(UUID.randomUUID())
-                .lastName(lsrDto.getLastName())
-                .firstName(lsrDto.getFirstName())
-                .middleName(lsrDto.getMiddleName())
-                .birthDate(lsrDto.getBirthday())
-                .email(lsrDto.getEmail())
-                .passport(passport)
-                .build();
-    }
-
-    private Statement createStatement(Client client) {
-        return Statement.builder()
-                .id(UUID.randomUUID())
-                .clientId(client)
-                .status(ApplicationStatus.PREAPPROVAL)
-                .statusHistory(new ArrayList<>())
-                .build();
-    }
-
-    private LoanStatementRequestDto getLsrDto(Integer amount) {
+    private LoanStatementRequestDto getLsrDto(int amount, int birthYear) {
 
         return LoanStatementRequestDto.builder()
                 .amount(new BigDecimal(amount))
@@ -148,16 +109,16 @@ public class DealControllerTest {
                 .firstName("Vladimir")
                 .lastName("Petrov")
                 .email("vov@vov.vov")
-                .birthday(LocalDate.of(2002, 4, 27))
+                .birthday(LocalDate.of(birthYear, 4, 27))
                 .passportSeries("0123")
                 .passportNumber("456789")
                 .build();
     }
 
-    private LoanOfferDto getLoDto(Integer term) {
+    private LoanOfferDto getLoDto(int term) {
 
         return LoanOfferDto.builder()
-                .statementId(createStatement(createClient(getLsrDto(30000))).getId())
+                .statementId(UUID.randomUUID())
                 .requestedAmount(new BigDecimal(30000))
                 .totalAmount(new BigDecimal(30000))
                 .term(term)
