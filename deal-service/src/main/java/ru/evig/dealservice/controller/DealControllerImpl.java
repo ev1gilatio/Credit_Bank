@@ -2,7 +2,6 @@ package ru.evig.dealservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import ru.evig.dealservice.DealClient;
 import ru.evig.dealservice.dto.*;
 import ru.evig.dealservice.entity.Statement;
 import ru.evig.dealservice.service.DealService;
