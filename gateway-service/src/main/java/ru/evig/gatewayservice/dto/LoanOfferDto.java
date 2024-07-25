@@ -1,14 +1,12 @@
 package ru.evig.gatewayservice.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 @Data
-@Builder
 public class LoanOfferDto {
 
     @Schema(example = "de1b74b7-f3fa-4ba5-9b96-63ca9db4ae9a")

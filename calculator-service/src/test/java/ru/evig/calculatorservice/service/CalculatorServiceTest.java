@@ -47,14 +47,14 @@ public class CalculatorServiceTest {
         BigDecimal rateIeeFalseIscFalse = new BigDecimal("10.5");
 
         assertEquals(expected.get(0).getRequestedAmount(), amount);
-        assertEquals(totalAmountIsInsuranceEnabledTrue, expected.get(0).getTotalAmount());
-        assertEquals(totalAmountIsInsuranceEnabledTrue, expected.get(1).getTotalAmount());
-        assertEquals(totalAmountIsInsuranceEnabledFalse, expected.get(2).getTotalAmount());
-        assertEquals(totalAmountIsInsuranceEnabledFalse, expected.get(3).getTotalAmount());
-        assertEquals(rateIeeTrueIscTrue, expected.get(0).getRate());
-        assertEquals(rateIeeTrueIscFalse, expected.get(1).getRate());
-        assertEquals(rateIeeFalseIscTrue, expected.get(2).getRate());
-        assertEquals(rateIeeFalseIscFalse, expected.get(3).getRate());
+        assertEquals(totalAmountIsInsuranceEnabledTrue, expected.get(3).getTotalAmount());
+        assertEquals(totalAmountIsInsuranceEnabledTrue, expected.get(2).getTotalAmount());
+        assertEquals(totalAmountIsInsuranceEnabledFalse, expected.get(1).getTotalAmount());
+        assertEquals(totalAmountIsInsuranceEnabledFalse, expected.get(0).getTotalAmount());
+        assertEquals(rateIeeTrueIscTrue, expected.get(3).getRate());
+        assertEquals(rateIeeTrueIscFalse, expected.get(2).getRate());
+        assertEquals(rateIeeFalseIscTrue, expected.get(1).getRate());
+        assertEquals(rateIeeFalseIscFalse, expected.get(0).getRate());
     }
 
     @Test

@@ -1,7 +1,6 @@
 package ru.evig.gatewayservice.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
 import lombok.Data;
 import ru.evig.gatewayservice.enums.EmploymentPosition;
 import ru.evig.gatewayservice.enums.EmploymentStatus;
@@ -9,7 +8,6 @@ import ru.evig.gatewayservice.enums.EmploymentStatus;
 import java.math.BigDecimal;
 
 @Data
-@Builder
 public class EmploymentDto {
 
     @Schema(example = "EMPLOYEE")

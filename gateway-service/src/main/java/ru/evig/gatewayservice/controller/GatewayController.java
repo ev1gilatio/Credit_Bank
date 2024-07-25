@@ -82,9 +82,13 @@ public interface GatewayController {
     @GetMapping("/cancel/{statementId}")
     void clientDenied(@PathVariable String statementId);
 
+    @Operation(summary = "Получение заявки",
+            description = "Админский эндпоинт для получения заявки по ID")
     @GetMapping("/admin/statement/{statementId}")
     Statement getAdminStatement(@PathVariable String statementId);
 
+    @Operation(summary = "Получение всех заявок",
+            description = "Админский эндпоинт для получения всех заявок")
     @GetMapping("/admin/statement")
     List<Statement> getAdminAllStatements();
 }

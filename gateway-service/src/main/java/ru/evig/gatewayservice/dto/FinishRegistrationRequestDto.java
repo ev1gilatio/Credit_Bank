@@ -1,7 +1,6 @@
 package ru.evig.gatewayservice.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
 import lombok.Data;
 import ru.evig.gatewayservice.enums.Gender;
 import ru.evig.gatewayservice.enums.MaritalStatus;
@@ -9,7 +8,6 @@ import ru.evig.gatewayservice.enums.MaritalStatus;
 import java.time.LocalDate;
 
 @Data
-@Builder
 public class FinishRegistrationRequestDto {
 
     @Schema(example = "MALE")

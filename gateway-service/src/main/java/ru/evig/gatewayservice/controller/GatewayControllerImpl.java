@@ -1,6 +1,5 @@
 package ru.evig.gatewayservice.controller;
 
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.evig.gatewayservice.GatewayToDealClient;
