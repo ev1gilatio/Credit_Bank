@@ -13,8 +13,7 @@ import ru.evig.dealservice.enums.ApplicationStatus;
 import ru.evig.dealservice.enums.ChangeType;
 import ru.evig.dealservice.enums.CreditStatus;
 import ru.evig.dealservice.enums.EmailTheme;
-import ru.evig.dealservice.exception.StatementDeniedException;
-import ru.evig.dealservice.exception.StatementIssuedException;
+import ru.evig.dealservice.exception.RetryingRequestExceptionHandler;
 import ru.evig.dealservice.mapper.ClientMapper;
 import ru.evig.dealservice.mapper.CreditMapper;
 import ru.evig.dealservice.mapper.PassportMapper;
@@ -43,6 +42,7 @@ public class DealService {
 
     private final KafkaService kafka;
     private final DealClient dealClient;
+    private final RetryingRequestExceptionHandler exceptionHandler;
 
     public List<LoanOfferDto> getLoanOfferDtoList(LoanStatementRequestDto lsrDto) {
         log.info("Input data for getLoanOfferDtoList = " + lsrDto);
@@ -86,7 +86,8 @@ public class DealService {
     }
 
     public void selectLoanOffer(LoanOfferDto loDto) {
-        checkDeniedStatus(loDto.getStatementId().toString());
+        String id = loDto.getStatementId().toString();
+        exceptionHandler.checkSelectedOffer(id);
 
         log.info("Input data for selectLoanOffer = " + loDto);
 
@@ -102,13 +103,15 @@ public class DealService {
 
         log.info("Saved data to DB from selectLoanOffer = " + statement);
 
-        sendMessageToTopic(loDto.getStatementId().toString(),
+        sendMessageToTopic(id,
                 EmailTheme.FINISH_REGISTRATION,
                 "finish-registration"
         );
     }
 
     public void createCredit(FinishRegistrationRequestDto frrDto, String statementId) {
+        exceptionHandler.checkCreatedCredit(statementId);
+
         CreditDto dealClientCreditDto;
         ScoringDataDto sdDto = getScoringDataDto(frrDto, statementId);
 
@@ -232,6 +235,8 @@ public class DealService {
     }
 
     public void documentPerforming(String statementId) {
+        exceptionHandler.checkDocumentStatus(statementId);
+
         changeStatementStatus(statementId, ApplicationStatus.PREPARE_DOCUMENTS);
 
         sendMessageToTopic(statementId,
@@ -243,7 +248,8 @@ public class DealService {
     }
 
     public void sesCodePerforming(String statementId) {
-        checkDeniedStatus(statementId);
+        exceptionHandler.checkSesCodeGenerated(statementId);
+
         generateSesCode(statementId);
 
         sendMessageToTopic(statementId,
@@ -253,6 +259,8 @@ public class DealService {
     }
 
     public void finishOperation(String statementId) {
+        exceptionHandler.checkDocumentSignedAndCreditIssuedStatus(statementId);
+
         changeStatementStatus(statementId, ApplicationStatus.DOCUMENT_SIGNED);
         signDocuments(statementId);
         changeStatementStatus(statementId, ApplicationStatus.CREDIT_ISSUED);
@@ -265,8 +273,10 @@ public class DealService {
     }
 
     public void denialPerforming(String statementId) {
-        checkDeniedStatus(statementId);
-        checkIssuedStatus(statementId);
+        exceptionHandler.checkClientDeniedAndCreditIssuedStatus(
+                statementId,
+                findStatementInDB(UUID.fromString(statementId)).getStatus()
+        );
 
         changeStatementStatus(statementId, ApplicationStatus.CLIENT_DENIED);
 
@@ -279,7 +289,6 @@ public class DealService {
     public void signDocuments(String statementId) {
         Statement statement = findStatementInDB(UUID.fromString(statementId));
         statement.setSignDate(LocalDateTime.now());
-
         Statement saved = statementRepository.save(statement);
 
         log.info("Saved data to DB from signDocuments = " + saved);
@@ -294,27 +303,8 @@ public class DealService {
         creditRepository.save(credit);
     }
 
-    public void checkDeniedStatus(String statementId) {
-        Statement statement = findStatementInDB(UUID.fromString(statementId));
-
-        if (statement.getStatus().equals(ApplicationStatus.CLIENT_DENIED)) {
-            throw new StatementDeniedException("Statement with ID " + statementId +
-                    " cannot be processed further");
-        }
-    }
-
-    public void checkIssuedStatus(String statementId) {
-        Statement statement = findStatementInDB(UUID.fromString(statementId));
-
-        if (statement.getStatus().equals(ApplicationStatus.CREDIT_ISSUED)) {
-            throw new StatementIssuedException("Statement with ID " + statementId +
-                    " already issued");
-        }
-    }
-
     public void changeStatementStatus(String statementId, ApplicationStatus status) {
         Statement statement = findStatementInDB(UUID.fromString(statementId));
-
         Statement.StatementBuilder statementToBuilder = statement.toBuilder();
         statement = statementToBuilder
                 .statusHistory(getChangedStatementStatus(statement))
