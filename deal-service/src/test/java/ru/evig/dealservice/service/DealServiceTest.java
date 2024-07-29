@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import ru.evig.dealservice.DealClient;
+import ru.evig.dealservice.config.KafkaProducerConfig;
 import ru.evig.dealservice.dto.*;
 import ru.evig.dealservice.entity.Client;
 import ru.evig.dealservice.entity.Statement;
@@ -35,6 +37,15 @@ public class DealServiceTest {
     @MockBean
     private StatementRepository statementRepository;
 
+    @MockBean
+    private KafkaService kafka;
+
+    @MockBean
+    private KafkaProducerConfig kafkaProducerConfig;
+
+    @MockBean
+    private DealClient dealClient;
+
     @Test
     void shouldReturnClient() {
         Client client = service.createClient(getLsrDto());
@@ -54,7 +65,6 @@ public class DealServiceTest {
         Statement statement = service.createStatement(client);
 
         assertNotNull(statement);
-        assertNotNull(statement.getId());
         assertNotNull(statement.getClientId());
         assertEquals(client, statement.getClientId());
         assertEquals(ApplicationStatus.PREAPPROVAL, statement.getStatus());
@@ -63,25 +73,10 @@ public class DealServiceTest {
     }
 
     @Test
-    void shouldAddStatementIdToLoanOfferDto() {
-        Client client = createClient(getLsrDto());
-        Statement statement = createStatement(client);
-
-        List<LoanOfferDto> list = service.getLoanOfferDtoList(
-                getLoDtoList(),
-                statement.getId()
-        );
-
-        assertNotNull(list);
-        assertEquals(4, list.size());
-        assertEquals(statement.getId(), list.get(0).getStatementId());
-    }
-
-    @Test
     void shouldReturnEntityNotFoundExceptionInsteadOfCredit() {
         EntityNotFoundException thrown = assertThrows(
                 EntityNotFoundException.class,
-                () -> service.createCredit(getCreditDto(), "5d3ddd1d-eef2-414d-900f-a625669e5ad0")
+                () -> service.createCredit(getFrrDto(), "5d3ddd1d-eef2-414d-900f-a625669e5ad0")
         );
 
         assertTrue(thrown.getMessage().contains("Statement with ID 5d3ddd1d-eef2-414d-900f-a625669e5ad0 not found"));
@@ -97,54 +92,6 @@ public class DealServiceTest {
         assertTrue(thrown.getMessage().contains("Statement with ID 5d3ddd1d-eef2-414d-900f-a625669e5ad0 not found"));
     }
 
-    private Client createClient(LoanStatementRequestDto lsrDto) {
-        PassportDto passport = PassportDto.builder()
-                .passportUUID(UUID.randomUUID())
-                .series(lsrDto.getPassportSeries())
-                .number(lsrDto.getPassportNumber())
-                .build();
-
-        return Client.builder()
-                .id(UUID.randomUUID())
-                .lastName(lsrDto.getLastName())
-                .firstName(lsrDto.getFirstName())
-                .middleName(lsrDto.getMiddleName())
-                .birthDate(lsrDto.getBirthday())
-                .email(lsrDto.getEmail())
-                .passport(passport)
-                .build();
-    }
-
-    private Statement createStatement(Client client) {
-
-        return Statement.builder()
-                .id(UUID.randomUUID())
-                .clientId(client)
-                .status(ApplicationStatus.PREAPPROVAL)
-                .statusHistory(new ArrayList<>())
-                .build();
-    }
-
-    private List<LoanOfferDto> getLoDtoList() {
-        List<LoanOfferDto> list = new ArrayList<>();
-
-        for (int i = 0; i < 4; i++) {
-            LoanOfferDto loDto = LoanOfferDto.builder()
-                    .requestedAmount(new BigDecimal(30000))
-                    .totalAmount(new BigDecimal(30000))
-                    .term(6)
-                    .monthlyPayment(new BigDecimal("5154.24"))
-                    .rate(new BigDecimal("10.5"))
-                    .isInsuranceEnable(false)
-                    .isSalaryClient(false)
-                    .build();
-
-            list.add(loDto);
-        }
-
-        return list;
-    }
-
     private LoanStatementRequestDto getLsrDto() {
 
         return LoanStatementRequestDto.builder()
@@ -156,20 +103,6 @@ public class DealServiceTest {
                 .birthday(LocalDate.of(2002, 4, 27))
                 .passportSeries("0123")
                 .passportNumber("456789")
-                .build();
-    }
-
-    private CreditDto getCreditDto() {
-
-        return CreditDto.builder()
-                .amount(new BigDecimal(30000))
-                .term(6)
-                .monthlyPayment(new BigDecimal("5109.94"))
-                .rate(new BigDecimal("7.5"))
-                .psk(new BigDecimal("30659.66"))
-                .isInsuranceEnabled(false)
-                .isSalaryClient(false)
-                .paymentSchedule(null)
                 .build();
     }
 

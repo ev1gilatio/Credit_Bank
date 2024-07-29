@@ -73,4 +73,18 @@ public class DealControllerImpl implements DealController {
     public void clientDenied(@PathVariable String statementId) {
         service.denialPerforming(statementId);
     }
+
+    @Override
+    @GetMapping("/admin/statement/{statementId}")
+    public Statement getAdminStatement(@PathVariable String statementId) {
+
+        return service.findStatementInDB(UUID.fromString(statementId));
+    }
+
+    @Override
+    @GetMapping("/admin/statement")
+    public List<Statement> getAdminAllStatements() {
+
+        return service.findAllStatementsInDB();
+    }
 }

@@ -58,7 +58,7 @@ public class ExceptionApiHandler {
     private ResponseEntity<String> handleException(FeignException e, WebRequest r) {
         logging(e, r);
 
-        return new ResponseEntity<>("Error from another service: " + e.contentUTF8(), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(e.contentUTF8(), HttpStatus.BAD_REQUEST);
     }
 
     private void logging(Exception e, WebRequest r) {

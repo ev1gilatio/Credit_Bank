@@ -8,9 +8,9 @@ import ru.evig.dossierservice.DossierClient;
 import ru.evig.dossierservice.dto.EmailDetails;
 import ru.evig.dossierservice.dto.EmailMessage;
 import ru.evig.dossierservice.dto.PassportDto;
-import ru.evig.dossierservice.entity.Client;
-import ru.evig.dossierservice.entity.Credit;
-import ru.evig.dossierservice.entity.Statement;
+import ru.evig.dossierservice.dto.Client;
+import ru.evig.dossierservice.dto.Credit;
+import ru.evig.dossierservice.dto.Statement;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;

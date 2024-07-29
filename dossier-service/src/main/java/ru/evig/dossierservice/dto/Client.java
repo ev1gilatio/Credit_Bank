@@ -1,7 +1,6 @@
-package ru.evig.dossierservice.entity;
+package ru.evig.dossierservice.dto;
 
 import lombok.Data;
-import ru.evig.dossierservice.dto.PassportDto;
 
 import java.time.LocalDate;
 

@@ -54,7 +54,7 @@ public interface DealController {
     void createCredit(@Valid @RequestBody FinishRegistrationRequestDto frrDto, @PathVariable String statementId);
 
     @Operation(summary = "Создание кредитных документов",
-            description = "dossier-service обращается к deal-service и получает кредитные документы, " +
+            description = "dossier-service формирует кредитные документы, " +
                     "клиенту отправляется email с кредитными документами и ссылкой на подписание")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Успешное изменение статусов в Statement"),
@@ -101,4 +101,14 @@ public interface DealController {
                     "если захочет отменить процедуру кредитования")
     @GetMapping("/cancel/{statementId}")
     void clientDenied(@PathVariable String statementId);
+
+    @Operation(summary = "Получение Statement по ID",
+            description = "Админский эндпоинт для получения Statement")
+    @GetMapping("/admin/statement/{statementId}")
+    Statement getAdminStatement(@PathVariable String statementId);
+
+    @Operation(summary = "Получение всех Statement",
+            description = "Админский эндпоинт для получения всех Statement")
+    @GetMapping("/admin/statement")
+    List<Statement> getAdminAllStatements();
 }
