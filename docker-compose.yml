@@ -1,5 +1,16 @@
-version: '2'
+version: "3"
+
 services:
+  database:
+    image: postgres:14.12-alpine3.20
+    restart: on-failure
+    environment:
+      POSTGRES_USER: evig
+      POSTGRES_PASSWORD: evig123
+      POSTGRES_DB: credit_bank_db
+    ports:
+      - "5432:5432"
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.4
     environment:
@@ -13,7 +24,7 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - "2182:2182"
+      - "9092:2182"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -21,3 +32,35 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  calculator-service:
+    image: evigilatio/calc-service-image
+    ports:
+      - "8080:8080"
+
+  deal-service:
+    image: evigilatio/deal-service-image
+    ports:
+      - "8081:8081"
+    environment:
+      spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/credit_bank_db
+      DB_USER: evig
+      DB_PASSWORD: evig123
+
+  statement-service:
+    image: evigilatio/statement-service-image
+    ports:
+      - "8082:8082"
+
+  dossier-service:
+    image: evigilatio/dossier-service-image
+    ports:
+      - "8083:8083"
+    environment:
+      EMAIL: samarin.vladimir163@gmail.com
+      EMAIL_PASSWORD: mjrgljubymsvgduf
+
+  gateway-service:
+    image: evigilatio/gateway-service-image
+    ports:
+      - "8084:8084"
