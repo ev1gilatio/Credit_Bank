@@ -1,0 +1,1 @@
+<img src="https://codecov.io/gh/ev1gilatio/Credit_Bank/graph/badge.svg?token=PSI631RF9D"/> <img src="https://sonarcloud.io/api/project_badges/measure?project=ev1gilatio_Credit_Bank&metric=alert_status"/>
