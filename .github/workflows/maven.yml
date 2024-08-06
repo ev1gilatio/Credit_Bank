@@ -25,6 +25,7 @@ jobs:
       env:
         DB_USER: 'evig'
         DB_PASSWORD: 'evig123'
+        spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/credit_bank_db
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4.0.1
       with:
