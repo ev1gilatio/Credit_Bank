@@ -10,6 +10,8 @@ services:
       POSTGRES_DB: credit_bank_db
     ports:
       - "5432:5432"
+    networks:
+      - post_net
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.4
@@ -18,6 +20,8 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
+    networks:
+      - post_net
 
   kafka:
     image: confluentinc/cp-kafka:7.4.4
@@ -32,11 +36,15 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - post_net
 
   calculator-service:
     image: evigilatio/calc-service-image
     ports:
       - "8080:8080"
+    networks:
+      - post_net
 
   deal-service:
     image: evigilatio/deal-service-image
@@ -46,6 +54,8 @@ services:
       DB_USER: evig
       DB_PASSWORD: evig123
       DB_URL: jdbc:postgresql://host.docker.internal:5432/credit_bank_db
+    networks:
+      - post_net
 
   statement-service:
     image: evigilatio/statement-service-image
@@ -64,3 +74,7 @@ services:
     image: evigilatio/gateway-service-image
     ports:
       - "8084:8084"
+
+networks:
+  post_net:
+    driver: bridge
