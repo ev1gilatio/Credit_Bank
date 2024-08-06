@@ -43,7 +43,6 @@ services:
     ports:
       - "8081:8081"
     environment:
-      spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/credit_bank_db
       DB_USER: evig
       DB_PASSWORD: evig123
 
