@@ -45,7 +45,7 @@ services:
     environment:
       DB_USER: evig
       DB_PASSWORD: evig123
-      DB_CONN_STR: jdbc:postgresql://host.docker.internal:5432/credit_bank_db
+      DB_URL: jdbc:postgresql://host.docker.internal:5432/credit_bank_db
 
   statement-service:
     image: evigilatio/statement-service-image
