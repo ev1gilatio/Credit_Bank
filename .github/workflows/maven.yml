@@ -29,7 +29,7 @@ jobs:
       env:
         DB_USER: 'evig'
         DB_PASSWORD: 'evig123'
-        DB_URL: jdbc:postgresql://host.docker.internal:5432/credit_bank_db
+        DB_URL: jdbc:postgresql:///credit_bank_db
 
     - name: Build statement-service with Maven
       run: mvn -B clean package --file ./statement-service/pom.xml
