@@ -57,7 +57,7 @@ services:
       - "8083:8083"
     environment:
       EMAIL: samarin.vladimir163@gmail.com
-      EMAIL_PASSWORD: mjrgljubymsvgduf
+      EMAIL_PASSWORD: ${{ secrets.EMAIL_PASS }}
 
   gateway-service:
     image: evigilatio/gateway-service-image
