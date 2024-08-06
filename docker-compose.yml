@@ -2,7 +2,6 @@ version: "3"
 
 services:
   database:
-    container_name: "DB_container"
     image: postgres:14.12-alpine3.20
     restart: on-failure
     environment:
@@ -44,7 +43,6 @@ services:
     ports:
       - "8081:8081"
     environment:
-      spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/credit_bank_db
       DB_USER: evig
       DB_PASSWORD: evig123
 
