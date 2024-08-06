@@ -12,21 +12,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_PASSWORD: evig123
-          POSTGRES_USER: evig
-          POSTGRES_DB: credit_bank_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK 17
@@ -35,12 +20,42 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: maven
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
+
+    - name: Build calculator-service with Maven
+      run: mvn -B clean package --file ./calculator-service/pom.xml
+
+    - name: Build deal-service with Maven
+      run: mvn -B clean package --file ./deal-service/pom.xml
       env:
         DB_USER: 'evig'
         DB_PASSWORD: 'evig123'
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v4.0.1
+
+    - name: Build statement-service with Maven
+      run: mvn -B clean package --file ./statement-service/pom.xml
+
+    - name: Build dossier-service with Maven
+      run: mvn -B clean package --file ./dossier-service/pom.xml
+
+    - name: Build gateway-service with Maven
+      run: mvn -B clean package --file ./gateway-service/pom.xml
+
+    - name: CodeCov for calculator-service
+      uses: codecov/codecov-action@v3
       with:
+        directory: ./calculator-service
         token: ${{ secrets.CODECOV_TOKEN }}
+        flags: Calculator
+
+    - name: CodeCov for deal-service
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./deal-service
+        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: Deal
+
+    - name: CodeCov for statement-service
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./statement-service
+        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: Statement
