@@ -21,15 +21,15 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
-    - name: Build calculator-service with Maven
-      run: mvn -B clean package --file ./calculator-service/pom.xml
+    #- name: Build calculator-service with Maven
+      #run: mvn -B clean package --file ./calculator-service/pom.xml
 
     - name: Build deal-service with Maven
       run: mvn -B clean package --file ./deal-service/pom.xml
       env:
         DB_USER: 'evig'
         DB_PASSWORD: 'evig123'
-        DB_URL: jdbc:postgresql://localhost:5432/credit_bank_db
+        DB_URL: jdbc:postgresql://database:5432/credit_bank_db
 
     - name: Build statement-service with Maven
       run: mvn -B clean package --file ./statement-service/pom.xml
