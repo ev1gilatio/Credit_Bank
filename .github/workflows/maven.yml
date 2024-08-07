@@ -14,6 +14,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -22,10 +24,14 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
+    # --- Data base in docker-compose --- #
+
     - name: Set DB with db-compose
       uses: hoverkraft-tech/compose-action@v2.0.1
       with:
         compose-file: "./db-compose.yml"
+
+    # --- Maven build --- #
 
     - name: Build calculator-service with Maven
       run: mvn -B clean package --file ./calculator-service/pom.xml
@@ -45,6 +51,8 @@ jobs:
 
     - name: Build gateway-service with Maven
       run: mvn -B clean package --file ./gateway-service/pom.xml
+
+    # --- CodeCov --- #
 
     - name: CodeCov for calculator-service
       uses: codecov/codecov-action@v3
@@ -66,3 +74,38 @@ jobs:
         directory: ./statement-service
         token: ${{ secrets.CODECOV_TOKEN }}
         flags: Statement
+
+    # --- SonarCloud --- #
+
+    - name: Analyze calculator-service with SonarCloud
+      working-directory: ./calculator-service
+      run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=ev1gilatio_Credit_Bank -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=neostudy
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    - name: Analyze deal-service with SonarCloud
+      working-directory: ./deal-service
+      run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=ev1gilatio_Credit_Bank -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=neostudy
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        DB_USER: 'evig'
+        DB_PASSWORD: 'evig123'
+        DB_URL: jdbc:postgresql://127.0.0.1:5432/credit_bank_db
+
+    - name: Analyze statement-service with SonarCloud
+      working-directory: ./statement-service
+      run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=ev1gilatio_Credit_Bank -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=neostudy
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    - name: Analyze dossier-service with SonarCloud
+      working-directory: ./dossier-service
+      run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=ev1gilatio_Credit_Bank -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=neostudy
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    - name: Analyze gateway-service with SonarCloud
+      working-directory: ./gateway-service
+      run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=ev1gilatio_Credit_Bank -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=neostudy
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
