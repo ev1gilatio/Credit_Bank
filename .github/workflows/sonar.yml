@@ -40,4 +40,7 @@ jobs:
     - name: Build and analyze
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        DB_USER: 'evig'
+        DB_PASSWORD: 'evig123'
+        DB_URL: jdbc:postgresql://host.docker.internal:5432/credit_bank_db
       run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=ev1gilatio_Credit_Bank -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=neostudy
