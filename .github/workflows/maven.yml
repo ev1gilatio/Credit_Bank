@@ -3,9 +3,9 @@ name: Java CI with Maven
 on:
   push:
     branches:
-      - feature/credit-bank/docker-compose
-#  pull_request:
-#    types: [opened, synchronize, reopened]
+      - develop
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   build:
@@ -14,6 +14,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
