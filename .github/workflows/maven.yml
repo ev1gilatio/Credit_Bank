@@ -21,15 +21,20 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
+    - name: Set DB with db-compose
+      uses: hoverkraft-tech/compose-action@v2.0.1
+      with:
+        compose-file: "./db-compose.yml"
+
     - name: Build calculator-service with Maven
       run: mvn -B clean package --file ./calculator-service/pom.xml
 
-#    - name: Build deal-service with Maven
-#      run: mvn -B clean package --file ./deal-service/pom.xml
-#      env:
-#        DB_USER: 'evig'
-#        DB_PASSWORD: 'evig123'
-#        DB_URL: jdbc:postgresql://127.0.0.1:5432/credit_bank_db
+    - name: Build deal-service with Maven
+      run: mvn -B clean package --file ./deal-service/pom.xml
+      env:
+        DB_USER: 'evig'
+        DB_PASSWORD: 'evig123'
+        DB_URL: jdbc:postgresql://127.0.0.1:5432/credit_bank_db
 
     - name: Build statement-service with Maven
       run: mvn -B clean package --file ./statement-service/pom.xml
@@ -47,12 +52,12 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         flags: Calculator
 
-#    - name: CodeCov for deal-service
-#      uses: codecov/codecov-action@v3
-#      with:
-#        directory: ./deal-service
-#        token: ${{ secrets.CODECOV_TOKEN }}
-#        flags: Deal
+    - name: CodeCov for deal-service
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./deal-service
+        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: Deal
 
     - name: CodeCov for statement-service
       uses: codecov/codecov-action@v3
