@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  database:
+    image: postgres:14.12-alpine3.20
+    restart: on-failure
+    environment:
+      POSTGRES_USER: evig
+      POSTGRES_PASSWORD: evig123
+      POSTGRES_DB: credit_bank_db
+    ports:
+      - "5432:5432"
