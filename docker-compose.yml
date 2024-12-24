@@ -1,4 +1,14 @@
-version: "3"
+version: "3.9"
+
+x-def-logging: &default-logging
+  logging:
+    driver: "loki"
+    options:
+      loki-url: "http://localhost:3100/loki/api/v1/push"
+      loki-batch-size: "100"
+      loki-retries: 2
+      loki-max-backoff: 1000ms
+      loki-timeout: 1s
 
 services:
   database:
@@ -35,11 +45,13 @@ services:
 
   calculator-service:
     image: evigilatio/calc-service-image
+    <<: *default-logging
     ports:
       - "8080:8080"
 
   deal-service:
     image: evigilatio/deal-service-image
+    <<: *default-logging
     ports:
       - "8081:8081"
     environment:
@@ -49,11 +61,13 @@ services:
 
   statement-service:
     image: evigilatio/statement-service-image
+    <<: *default-logging
     ports:
       - "8082:8082"
 
   dossier-service:
     image: evigilatio/dossier-service-image
+    <<: *default-logging
     ports:
       - "8083:8083"
     environment:
@@ -62,5 +76,30 @@ services:
 
   gateway-service:
     image: evigilatio/gateway-service-image
+    <<: *default-logging
     ports:
       - "8084:8084"
+
+  loki:
+    hostname: loki
+    image: grafana/loki:2.9.0
+    environment:
+      TZ: ${SYSTEM_TIMEZONE:-Europe/Moscow}
+    volumes:
+      - ./loki/retention-config.yaml:/etc/loki/retention-config.yaml
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/retention-config.yaml
+
+  grafana:
+    hostname: grafana
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - TZ=${SYSTEM_TIMEZONE:-Europe/Moscow}
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
